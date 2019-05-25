@@ -847,7 +847,7 @@ void memcached_thread_init(int nthreads, void *arg) {
         /* Reserve three fds for the libevent base, and two for the pipe */
         stats_state.reserved_fds += 5;
         threads[i]. load = 0; /*showan :  */
-        threads[i]. active_conn = 0; /*showan* /
+        threads[i]. active_conn = 0; /*showan */
         threads[i].active= 1; /* showan: 1 means thread is active*/
         threads[i].am_i_a_dispatcher_too = 0; /* showan:  0 menas thread does  not dispatch now. Maybe later*/ 
 

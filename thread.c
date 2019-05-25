@@ -482,6 +482,36 @@ static void thread_libevent_process(int fd, short which, void *arg) {
 /* Which thread we assigned a connection to most recently. */
 static int last_thread = -1;
 
+
+
+
+int
+choose_next_worker()
+{
+
+int tid = (last_thread + 1) % settings.num_threads;
+LIBEVENT_THREAD *thread = threads + tid;
+last_thread = tid;
+int last_thread_t = tid;
+
+for (int i =0; i < settings.num_threads; i++ ){
+   tid_t = (last_thread_t++) % settings.num_threads;
+   LIBEVENT_THREAD *thread_t = threads + tid_t;
+   if(thread->active == 0 && thread_t->active == 1 ){
+   thread= thread_t;
+   tid=tid_t;
+   last_thread = tid;
+   } else if(thread->active== 1 &&  thread_t->active == 1){
+   if(thread_t->active_conn < thread->active_conn  ){
+   thread= thread_t;
+   tid=tid_t;
+   last_thread = tid;
+   }
+   }
+}
+return tid;
+}
+
 /*
  * Dispatches a new connection to another thread. This is only ever called
  * from the main thread, either during initialization (for UDP) or because
@@ -499,6 +529,9 @@ void dispatch_conn_new(int sfd, enum conn_states init_state, int event_flags,
     }
 
     int tid = (last_thread + 1) % settings.num_threads;
+
+
+
 
     LIBEVENT_THREAD *thread = threads + tid;
 

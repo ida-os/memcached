@@ -1,4 +1,4 @@
-/* -*- Mode: C; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+e/* -*- Mode: C; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Thread management for memcached.
  */
@@ -447,6 +447,7 @@ static void thread_libevent_process(int fd, short which, void *arg) {
                     }
                 } else {
                     c->thread = me;
+                    c->active_conn++; /* showan: increase the connecton number of thread by one*/
 #ifdef TLS
                     if (settings.ssl_enabled && c->ssl != NULL) {
                         assert(c->thread && c->thread->ssl_wbuf);
@@ -845,6 +846,11 @@ void memcached_thread_init(int nthreads, void *arg) {
         setup_thread(&threads[i]);
         /* Reserve three fds for the libevent base, and two for the pipe */
         stats_state.reserved_fds += 5;
+        threads[i]. load = 0;
+        threads[i]. active_conn = 0; 
+        threads[i].active= 1; /* showan: 1 means thread is active*/
+        thread[i].am_i_a_dispatcher_too = 0; /* showan:  0 menas thread does  not dispatch now. Maybe later*/ 
+
     }
 
     /* Create threads after we've done all the libevent setup. */

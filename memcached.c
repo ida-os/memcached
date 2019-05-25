@@ -737,6 +737,23 @@ conn *conn_new(const int sfd, enum conn_states init_state,
 
     return c;
 }
+
+// =e
+conn *reinitialize_events(conn *c) {
+    event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
+    event_base_set(c->thread->base, &c->event);
+
+    if (event_add(&c->event, 0) == -1) {
+        perror("event_add");
+        return NULL;
+    }
+    c->thread->connections++;
+    fprintf(stderr, "thread %d received c=%d, connections=%d\n", c->thread->eid, c->sfd, c->thread->connections);
+
+    return c;
+}
+//
+
 #ifdef EXTSTORE
 static void recache_or_free(conn *c, io_wrap *wrap) {
     item *it;
@@ -5722,7 +5739,7 @@ static void drive_machine(conn *c) {
 #endif
 
                 dispatch_conn_new(sfd, conn_new_cmd, EV_READ | EV_PERSIST,
-                                     DATA_BUFFER_SIZE, c->transport, ssl_v);
+                                     DATA_BUFFER_SIZE, c->transport, ssl_v, stats_state.curr_conns);
             }
 
             stop = true;
@@ -6001,6 +6018,9 @@ static void drive_machine(conn *c) {
             break;
 
         case conn_closing:
+            // =e
+            c->thread->connections--;
+            //
             if (IS_UDP(c->transport))
                 conn_cleanup(c);
             else
@@ -6020,6 +6040,21 @@ static void drive_machine(conn *c) {
         case conn_max_state:
             assert(false);
             break;
+        }
+    }
+
+    // =e
+    if(c->thread){
+        // fprintf(stderr,"Thread %lu, gets %lu\n", c->thread->thread_id, c->thread->stats.get_cmds);
+        if(!c->thread->mother && !(c->thread->stats.get_cmds % 100000)) {
+            c->thread->active = false;
+            fprintf(stderr, "Signing off %d, conns: %d\n", c->thread->eid, c->thread->connections);
+        }
+        if(!c->thread->active) {
+            fprintf(stderr, "%d donating con %d , conns: %d\n", c->thread->eid, c->sfd, c->thread->connections);
+            c->thread->connections--;
+            event_del(&c->event);
+            donate_conn(c);
         }
     }
 
@@ -6235,7 +6270,7 @@ static int server_socket(const char *interface,
                 int per_thread_fd = c ? dup(sfd) : sfd;
                 dispatch_conn_new(per_thread_fd, conn_read,
                                   EV_READ | EV_PERSIST,
-                                  UDP_READ_BUFFER_SIZE, transport, NULL);
+                                  UDP_READ_BUFFER_SIZE, transport, NULL, stats_state.curr_conns);
             }
         } else {
             if (!(listen_conn_add = conn_new(sfd, conn_listening,

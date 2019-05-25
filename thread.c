@@ -27,6 +27,7 @@
 enum conn_queue_item_modes {
     queue_new_conn,   /* brand new connection. */
     queue_redispatch, /* redispatching from side thread */
+    queue_donate        // =e  donating connection to another thread
 };
 typedef struct conn_queue_item CQ_ITEM;
 struct conn_queue_item {
@@ -315,7 +316,7 @@ void accept_new_conns(const bool do_accept) {
 /*
  * Set up a thread's information.
  */
-static void setup_thread(LIBEVENT_THREAD *me) {
+static void setup_thread(LIBEVENT_THREAD *me, int id) {
 #if defined(LIBEVENT_VERSION_NUMBER) && LIBEVENT_VERSION_NUMBER >= 0x02000101
     struct event_config *ev_config;
     ev_config = event_config_new();
@@ -375,6 +376,11 @@ static void setup_thread(LIBEVENT_THREAD *me) {
         }
     }
 #endif
+    // =e
+    me->connections = 0;
+    me->eid = id;
+    me->active = false;
+    me->mother = false;
 }
 
 /*
@@ -425,7 +431,7 @@ static void thread_libevent_process(int fd, short which, void *arg) {
     switch (buf[0]) {
     case 'c':
         item = cq_pop(me->new_conn_queue);
-
+        fprintf(stderr, "thread %d received c\n", me->eid);
         if (NULL == item) {
             break;
         }
@@ -447,6 +453,7 @@ static void thread_libevent_process(int fd, short which, void *arg) {
                     }
                 } else {
                     c->thread = me;
+                    me->connections++;
 #ifdef TLS
                     if (settings.ssl_enabled && c->ssl != NULL) {
                         assert(c->thread && c->thread->ssl_wbuf);
@@ -458,6 +465,9 @@ static void thread_libevent_process(int fd, short which, void *arg) {
 
             case queue_redispatch:
                 conn_worker_readd(item->c);
+                break;
+            case queue_donate:
+                reinitialize_events(item->c);
                 break;
         }
         cqi_free(item);
@@ -479,7 +489,12 @@ static void thread_libevent_process(int fd, short which, void *arg) {
 }
 
 /* Which thread we assigned a connection to most recently. */
-static int last_thread = -1;
+static int last_thread = 0;
+
+// =e
+static int conn_counter = 0;
+static int reference_pointer = 0;
+//
 
 /*
  * Dispatches a new connection to another thread. This is only ever called
@@ -487,7 +502,7 @@ static int last_thread = -1;
  * of an incoming connection.
  */
 void dispatch_conn_new(int sfd, enum conn_states init_state, int event_flags,
-                       int read_buffer_size, enum network_transport transport, void *ssl) {
+                       int read_buffer_size, enum network_transport transport, void *ssl, uint64_t conns) {
     CQ_ITEM *item = cqi_new();
     char buf[1];
     if (item == NULL) {
@@ -496,10 +511,32 @@ void dispatch_conn_new(int sfd, enum conn_states init_state, int event_flags,
         fprintf(stderr, "Failed to allocate memory for connection object\n");
         return ;
     }
+    // =e
+    conn_counter++;
+    int i, tid = 0;
 
-    int tid = (last_thread + 1) % settings.num_threads;
+    if(conn_counter > 10) {
+        for(i=1; i < settings.num_threads; i++) {
+            if(!threads[i].active){
+                threads[i].active = true;
+                tid = i;
+            }
+        }
+        if(tid == 0) {
+            tid = reference_pointer++;
+            reference_pointer %= settings.num_threads;
+        }
+        conn_counter = 0;
+    }
+    else {
+        tid = last_thread;
+    }
+
+    fprintf(stderr, "Selecting thread %d for connection \n", tid);
+    //int tid = (last_thread + 1) % settings.num_threads;
 
     LIBEVENT_THREAD *thread = threads + tid;
+    //
 
     last_thread = tid;
 
@@ -512,13 +549,40 @@ void dispatch_conn_new(int sfd, enum conn_states init_state, int event_flags,
     item->ssl = ssl;
 
     cq_push(thread->new_conn_queue, item);
-
+    
     MEMCACHED_CONN_DISPATCH(sfd, thread->thread_id);
     buf[0] = 'c';
     if (write(thread->notify_send_fd, buf, 1) != 1) {
         perror("Writing to thread notify pipe");
     }
 }
+
+// =e
+void donate_conn(conn *c) {
+    CQ_ITEM *item = cqi_new();
+    char buf[1];
+    if (item == NULL) {
+        /* Can't cleanly redispatch connection. close it forcefully. */
+        c->state = conn_closed;
+        close(c->sfd);
+        return;
+    }
+    LIBEVENT_THREAD *thread = threads;
+    c->thread = thread;
+    item->sfd = c->sfd;
+    item->init_state = conn_new_cmd;
+    item->c = c;
+    item->mode = queue_donate;
+
+    cq_push(thread->new_conn_queue, item);
+
+    buf[0] = 'c';
+    if (write(thread->notify_send_fd, buf, 1) != 1) {
+        perror("Writing to thread notify pipe");
+    }
+}
+
+//
 
 /*
  * Re-dispatches a connection back to the original thread. Can be called from
@@ -842,10 +906,12 @@ void memcached_thread_init(int nthreads, void *arg) {
 #ifdef EXTSTORE
         threads[i].storage = arg;
 #endif
-        setup_thread(&threads[i]);
+        setup_thread(&threads[i], i);
         /* Reserve three fds for the libevent base, and two for the pipe */
         stats_state.reserved_fds += 5;
     }
+    threads[0].active = true;
+    threads[0].mother = true;
 
     /* Create threads after we've done all the libevent setup. */
     for (i = 0; i < nthreads; i++) {

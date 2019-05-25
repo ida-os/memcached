@@ -586,6 +586,11 @@ typedef struct {
 #ifdef TLS
     char   *ssl_wbuf;
 #endif
+// =e
+    int connections;
+    int eid;
+    bool active;
+    bool mother;
 
 } LIBEVENT_THREAD;
 typedef struct conn conn;
@@ -752,6 +757,10 @@ enum store_item_type do_store_item(item *item, int comm, conn* c, const uint32_t
 conn *conn_new(const int sfd, const enum conn_states init_state, const int event_flags, const int read_buffer_size,
     enum network_transport transport, struct event_base *base, void *ssl);
 
+// =e
+conn *reinitialize_events(conn *c);
+//
+
 void conn_worker_readd(conn *c);
 extern int daemonize(int nochdir, int noclose);
 
@@ -774,9 +783,12 @@ extern int daemonize(int nochdir, int noclose);
  * also #define-d to directly call the underlying code in singlethreaded mode.
  */
 void memcached_thread_init(int nthreads, void *arg);
+// =e
+void donate_conn(conn *c);
+//
 void redispatch_conn(conn *c);
 void dispatch_conn_new(int sfd, enum conn_states init_state, int event_flags, int read_buffer_size,
-    enum network_transport transport, void *ssl);
+    enum network_transport transport, void *ssl, uint64_t conns);
 void sidethread_conn_close(conn *c);
 
 /* Lock wrappers for cache functions that are called from main loop. */

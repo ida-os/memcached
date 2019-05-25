@@ -3082,7 +3082,7 @@ static size_t tokenize_command(char *command, token_t *tokens, const size_t max_
     for (i = 0; i < len; i++) {
         if (*e == ' ') {
             if (s != e) {
-                tokens[ntokens].value = s;
+                tokens[ntokens].value = s; 
                 tokens[ntokens].length = e - s;
                 ntokens++;
                 *e = '\0';
@@ -6006,6 +6006,7 @@ static void drive_machine(conn *c) {
             else
                 conn_close(c);
             stop = true;
+            c->thread->active_conn--; /* showan: reduce number of active connections when current connection is closed*/
             break;
 
         case conn_closed:

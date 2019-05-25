@@ -594,7 +594,7 @@ typedef struct {
 #ifdef TLS
     char   *ssl_wbuf;
 #endif
-
+ 
 } LIBEVENT_THREAD;
 typedef struct conn conn;
 #ifdef EXTSTORE

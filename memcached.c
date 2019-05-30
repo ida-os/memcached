@@ -6584,8 +6584,9 @@ static void clock_handler(const int fd, const short which, void *arg) {
         struct timespec ts;
         if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
             return;
-        current_time = (rel_time_t) (ts.tv_sec - monotonic_start);
-        printf("inside ti----------: %d \n", current_time); //tshowan
+        //current_time = (rel_time_t) (ts.tv_sec - monotonic_start); tshowan
+        current_time = (rel_time_t) ((((ts.tv_sec - monotonic_start) * 1000000) + ts.tv_usec)/ 1000); tshowan
+        //printf("inside ti----------: %d \n", current_time); //tshowan
         return;
     }
 #endif

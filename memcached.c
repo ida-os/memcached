@@ -5860,13 +5860,14 @@ static void drive_machine(conn *c) {
             }
             c->num_ops_over_last_window ++; /*  showan: connections is handling a new operation*/
             
+            int curr_time= current_time;
              
-            if((current_time - c->last_sampling_time) ==2){ // showan //
-                printf(" current timr %d ", current_time  );
-               c->rate= c->num_ops_over_last_window/(current_time - c->last_sampling_time ); //showan
+            if((curr_time - c->last_sampling_time) ==2){ // showan //
+                printf(" current timr %d ", curr_time  );
+               c->rate= c->num_ops_over_last_window/(curr_time - c->last_sampling_time ); //showan
               
                c->num_ops_over_last_window = 0;  // showan 
-               c->last_sampling_time= current_time;  // showan 
+               c->last_sampling_time= curr_time;  // showan 
                printf("rate is: %f \n", c->rate);
                
             }

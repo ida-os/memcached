@@ -6582,6 +6582,7 @@ static void clock_handler(const int fd, const short which, void *arg) {
         struct timeval tv;
         gettimeofday(&tv, NULL);
         current_time = (rel_time_t) (tv.tv_sec - process_started);
+        printf("inside timer: %d \n", current_time); //tshowan
     }
 }
 

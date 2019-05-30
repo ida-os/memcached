@@ -6574,7 +6574,7 @@ static void clock_handler(const int fd, const short which, void *arg) {
         authfile_load(settings.auth_file);
     }
 
-   // printf("inside timer: %d \n", current_time); //tshowan
+   
     evtimer_set(&clockevent, clock_handler, 0);
     event_base_set(main_base, &clockevent);
     evtimer_add(&clockevent, &t);
@@ -6585,14 +6585,16 @@ static void clock_handler(const int fd, const short which, void *arg) {
         if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
             return;
         current_time = (rel_time_t) (ts.tv_sec - monotonic_start);
+        printf("inside ti----------: %d \n", current_time); //tshowan
         return;
     }
 #endif
     {
+        printf("inside timer: %d \n", current_time); //tshowan
         struct timeval tv;
         gettimeofday(&tv, NULL);
         //current_time = (rel_time_t) (tv.tv_sec - process_started); //tshowan
-        current_time = (rel_time_t) (tv.tv_usec - process_started);
+        current_time = (rel_time_t) (tv.tv_usec );
        
     }
 }

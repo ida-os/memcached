@@ -727,8 +727,8 @@ struct conn {
     ssize_t (*sendmsg)(conn *c, struct msghdr *msg, int flags);
     ssize_t (*write)(conn *c, void *buf, size_t count);
     long num_ops_over_last_window; /* showan: this one shows number of operations over a window of time */
-    long avg_load; /* showan: avg load of the connection*/
-    unsigned double rate;
+    double avg_load; /* showan: avg load of the connection*/
+    double rate;
      rel_time_t last_sampling_time;
     
 };

@@ -1040,8 +1040,8 @@ static void conn_set_state(conn *c, enum conn_states state) {
 
 /* showan load variables   */
 unsigned long sampling_window= 1000; /*   showan : sampling window in micro soecond*/ 
-unsigned  double cold_threshold; /*   showan */
-unsigned double  hot_threshold; /*   showan */
+  double cold_threshold; /*   showan */
+ double  hot_threshold; /*   showan */
 void check_worker_status( LIBEVENT_THREAD * thread)
 {
 LIBEVENT_THREAD * worker= thread;

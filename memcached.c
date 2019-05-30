@@ -5859,7 +5859,7 @@ static void drive_machine(conn *c) {
                 stop = true;
             }
             c->num_ops_over_last_window ++; /*  showan: connections is handling a new operation*/
-            if(current_time - c->last_sampling_time >= sampling_window){ /*  showan */
+            if(current_time - c->last_sampling_time > 0){ /*  showan */
                c->rate= c->num_ops_over_last_window/(current_time - c->last_sampling_time ); /*  showan */
                printf(" current timr %d ", current_time  );
                c->num_ops_over_last_window = 0;  /*  showan */

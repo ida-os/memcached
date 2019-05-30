@@ -887,7 +887,7 @@ void memcached_thread_init(int nthreads, void *arg) {
         threads[i].load =0; /*showan :  */
         threads[i].active_conn = 0; /*showan */
         threads[i].active= true; /* showan: true means thread is active*/
-        threads[i].am_i_a_dispatcher_too = false; /* showan:  0 menas thread does  not dispatch now. Maybe later*/ 
+        threads[i].am_i_a_dispatching = false; /* showan:  0 menas thread does  not dispatch now. Maybe later*/ 
 
     }
 

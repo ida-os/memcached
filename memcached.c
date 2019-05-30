@@ -6566,7 +6566,7 @@ static void clock_handler(const int fd, const short which, void *arg) {
         authfile_load(settings.auth_file);
     }
 
-    printf("inside timer: %d \n", current_time); //tshowan
+   // printf("inside timer: %d \n", current_time); //tshowan
     evtimer_set(&clockevent, clock_handler, 0);
     event_base_set(main_base, &clockevent);
     evtimer_add(&clockevent, &t);

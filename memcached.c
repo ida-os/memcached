@@ -1037,7 +1037,7 @@ static void conn_set_state(conn *c, enum conn_states state) {
 
 
 /******************************   measuring load and determining when is a good time to denote conns ********/
-long ampling_window =1;
+long sampling_window =1;
 
 /* showan load variables   */
 /*

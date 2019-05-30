@@ -5862,8 +5862,8 @@ static void drive_machine(conn *c) {
             
             int curr_time= current_time;
              
-            if((curr_time - c->last_sampling_time) ==2){ // showan //
-                printf(" current timr %d ", curr_time  );
+            if((curr_time - c->last_sampling_time) >0){ // showan //
+                printf(" current timr %d ", curr_time - c->last_sampling_time  );
                c->rate= c->num_ops_over_last_window/(curr_time - c->last_sampling_time ); //showan
               
                c->num_ops_over_last_window = 0;  // showan 

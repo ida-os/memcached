@@ -6531,7 +6531,8 @@ static struct event clockevent;
  * Note that users who are setting explicit dates for expiration times *must*
  * ensure their clocks are correct before starting memcached. */
 static void clock_handler(const int fd, const short which, void *arg) {
-    struct timeval t = {.tv_sec = 1, .tv_usec = 0};
+    //struct timeval t = {.tv_sec = 1, .tv_usec = 0}; // tshowan
+    struct timeval t = {.tv_sec = 13, .tv_usec = 0};
     static bool initialized = false;
 #if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_MONOTONIC)
     static bool monotonic = false;
@@ -6565,6 +6566,7 @@ static void clock_handler(const int fd, const short which, void *arg) {
         authfile_load(settings.auth_file);
     }
 
+    printf("inside timer: %d \n", current_time); //tshowan
     evtimer_set(&clockevent, clock_handler, 0);
     event_base_set(main_base, &clockevent);
     evtimer_add(&clockevent, &t);
@@ -6582,7 +6584,7 @@ static void clock_handler(const int fd, const short which, void *arg) {
         struct timeval tv;
         gettimeofday(&tv, NULL);
         current_time = (rel_time_t) (tv.tv_sec - process_started);
-        printf("inside timer: %d \n", current_time); //tshowan
+       
     }
 }
 

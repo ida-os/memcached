@@ -1039,9 +1039,10 @@ static void conn_set_state(conn *c, enum conn_states state) {
 /******************************   measuring load and determining when is a good time to denote conns ********/
 
 /* showan load variables   */
-unsigned long sampling_window= 1000; /*   showan : sampling window in micro soecond*/ 
-  double cold_threshold; /*   showan */
- double  hot_threshold; /*   showan */
+/*
+unsigned long sampling_window= 1000; //   showan : sampling window in micro soecond
+  double cold_threshold; //  showan 
+ double  hot_threshold; //   showan 
 void check_worker_status( LIBEVENT_THREAD * thread)
 {
 LIBEVENT_THREAD * worker= thread;
@@ -1069,7 +1070,7 @@ void conn_doneate(conn *c) {
     int new_tid = choose_next_worker();
     LIBEVENT_THREAD *thread = threads + new_tid;
     c->ev_flags = EV_READ | EV_PERSIST;
-    /*fixme  -- showan: should we delete a c-> event????  */
+    //fixme  -- showan: should we delete a c-> event????  
     if (event_del(&c->event) == -1)  perror("event_del");
     c->thread = thread;
     event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
@@ -1083,7 +1084,7 @@ void conn_doneate(conn *c) {
 
 }
 
-
+*/
 
 
 /*

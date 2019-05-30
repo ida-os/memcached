@@ -5861,10 +5861,11 @@ static void drive_machine(conn *c) {
             c->num_ops_over_last_window ++; /*  showan: connections is handling a new operation*/
             if(current_time - c->last_sampling_time >= sampling_window){ /*  showan */
                c->rate= c->num_ops_over_last_window/(current_time - c->last_sampling_time ); /*  showan */
+               printf(" window is  %d ", current_time - c->last_sampling_time );
                c->num_ops_over_last_window = 0;  /*  showan */
                c->last_sampling_time= current_time;  /*  showan */
                printf("rate is: %f \n", c->rate);
-               printf(" window is  %d ", current_time - c->last_sampling_time );
+               
             }
             break;
 

@@ -5864,6 +5864,7 @@ static void drive_machine(conn *c) {
                c->num_ops_over_last_window = 0;  /*  showan */
                c->last_sampling_time= current_time;  /*  showan */
                printf("rate is: %f \n", c->rate);
+               printf(" window is  %d ", current_time - c->last_sampling_time );
             }
             break;
 

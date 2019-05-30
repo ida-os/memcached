@@ -500,12 +500,14 @@ int tid_t;
 for (int i =0; i < settings.num_threads; i++ ){
    tid_t = (last_thread_t++) % settings.num_threads;
    LIBEVENT_THREAD *thread_t = threads + tid_t;
-   if(thread->active == 0 && thread_t->active == 1 ){
+   if(!(thread_t->active) || thread_t->am_i_a_dispatching)
+   continue; 
+   if(!thread->active ){
    thread= thread_t;
    tid=tid_t;
    last_thread = tid;
-   } else if(thread->active== 1 &&  thread_t->active == 1){
-   if(thread_t->active_conn < thread->active_conn  ){
+   } else {
+   if(thread_t->active_conn < thread->active_conn  ){// fixme : load is not connections
    thread= thread_t;
    tid=tid_t;
    last_thread = tid;
@@ -532,7 +534,7 @@ void dispatch_conn_new(int sfd, enum conn_states init_state, int event_flags,
     }
 
     int tid = (last_thread + 1) % settings.num_threads;
-
+     //int  tid = choose_next_worker(); /* showan: */
 
 
 
@@ -884,8 +886,8 @@ void memcached_thread_init(int nthreads, void *arg) {
         stats_state.reserved_fds += 5;
         threads[i].load =0; /*showan :  */
         threads[i].active_conn = 0; /*showan */
-        threads[i].active= 1; /* showan: 1 means thread is active*/
-        threads[i].am_i_a_dispatcher_too = 0; /* showan:  0 menas thread does  not dispatch now. Maybe later*/ 
+        threads[i].active= true; /* showan: true means thread is active*/
+        threads[i].am_i_a_dispatcher_too = false; /* showan:  0 menas thread does  not dispatch now. Maybe later*/ 
 
     }
 

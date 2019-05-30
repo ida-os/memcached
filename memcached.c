@@ -150,6 +150,13 @@ volatile int slab_rebalance_signal;
  */
 void *ext_storage;
 #endif
+
+
+
+
+
+
+
 /** file scope variables **/
 static conn *listen_conn = NULL;
 static int max_fds;
@@ -406,7 +413,7 @@ static void *conn_timeout_thread(void *arg) {
                 continue;
 
             if (c->state != conn_new_cmd && c->state != conn_read)
-                continue;
+                continue;// showan: is this  a bug 
 
             if ((current_time - c->last_cmd_time) > settings.idle_timeout) {
                 buf[0] = 't';
@@ -551,6 +558,7 @@ conn *conn_new(const int sfd, enum conn_states init_state,
 
     assert(sfd >= 0 && sfd < max_fds);
     c = conns[sfd];
+    
 
     if (NULL == c) {
         if (!(c = (conn *)calloc(1, sizeof(conn)))) {
@@ -1025,6 +1033,58 @@ static void conn_set_state(conn *c, enum conn_states state) {
         c->state = state;
     }
 }
+
+
+
+/******************************   measuring load and determining when is a good time to denote conns ********/
+
+/* showan load variables   */
+unsigned long sampling_window= 1000; /*   showan : sampling window in micro soecond*/ 
+unsigned  double cold_threshold; /*   showan */
+unsigned double  hot_threshold; /*   showan */
+void check_worker_status( LIBEVENT_THREAD * thread)
+{
+LIBEVENT_THREAD * worker= thread;
+
+if(worker->load >=  hot_threshold){
+worker->w_state= hot;
+worker->am_i_a_dispatching = true;
+}
+else if(worker->load <= cold_threshold) 
+{
+worker->w_state= cold;
+worker->am_i_a_dispatching = true;
+}
+else
+{
+worker->w_state= normal;
+worker->am_i_a_dispatching = false;
+
+}
+}
+
+
+void conn_doneate(conn *c) {
+
+    int new_tid = choose_next_worker();
+    LIBEVENT_THREAD *thread = threads + new_tid;
+    c->ev_flags = EV_READ | EV_PERSIST;
+    /*fixme  -- showan: should we delete a c-> event????  */
+    if (event_del(&c->event) == -1)  perror("event_del");
+    c->thread = thread;
+    event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
+    event_base_set(c->thread->base, &c->event);
+    c->state = conn_new_cmd;
+
+    // TODO: call conn_cleanup/fail/etc
+    if (event_add(&c->event, 0) == -1) {
+        perror("event_add");
+    }
+
+}
+
+
+
 
 /*
  * Ensures that there is room for another struct iovec in a connection's
@@ -5615,6 +5675,8 @@ static int read_into_chunked_item(conn *c) {
     return total;
 }
 
+
+
 static void drive_machine(conn *c) {
     bool stop = false;
     int sfd;
@@ -5793,6 +5855,12 @@ static void drive_machine(conn *c) {
                     }
                 }
                 stop = true;
+            }
+            c->num_ops_over_last_window ++; /*  showan: connections is handling a new operation*/
+            if(current_time - c->last_sampling_time >= sampling_window){ /*  showan */
+               c->rate= c->num_ops_over_last_window/(current_time - c->last_sampling_time ); /*  showan */
+               c->num_ops_over_last_window = 0;  /*  showan */
+               c->last_sampling_time= current_time;  /*  showan */
             }
             break;
 
@@ -6023,6 +6091,26 @@ static void drive_machine(conn *c) {
             break;
         }
     }
+
+
+
+/* showan: check the load to set the state of the worker
+the question is, is it right to do this here which is crtical path in processing memcached requests
+*/
+// check_worker_status(c->thread);
+
+
+/* showan:  if worker is in dispatching mode, it donates conncetion
+the question is which connection- just randomly chooses one????*/
+
+
+    if(c->thread->am_i_a_dispatching)
+    {
+        denote_connection();
+
+    }
+
+
 
     return;
 }

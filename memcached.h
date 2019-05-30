@@ -385,7 +385,7 @@ struct settings {
     int access;  /* access mask (a la chmod) for unix domain socket */
     double factor;          /* chunk size growth factor */
     int chunk_size;
-    int num_threads;        /* number of worker (without dispatcher) libevent threads to run */
+    int num_threads;         /* number of worker (without dispatcher) libevent threads to run */
     int num_threads_per_udp; /* number of worker threads serving each udp socket */
     char prefix_delimiter;  /* character that marks a key prefix (for stats) */
     int detail_enabled;     /* nonzero if we're collecting detailed stats */
@@ -512,6 +512,7 @@ enum crawler_run_type {
     CRAWLER_AUTOEXPIRE=0, CRAWLER_EXPIRED, CRAWLER_METADUMP
 };
 
+
 typedef struct {
     struct _stritem *next;
     struct _stritem *prev;
@@ -569,6 +570,12 @@ typedef struct {
 } item_hdr;
 #endif
 
+enum worker_state{
+normal,    
+hot,
+cold
+};
+
 typedef struct {
     pthread_t thread_id;        /* unique ID of this thread */
     struct event_base *base;    /* libevent handle this thread uses */
@@ -580,9 +587,11 @@ typedef struct {
     cache_t *suffix_cache;      /* suffix cache */
     long load;   /* showan: the total number of requests over a the past window*/
     long active_conn; /* showan: number of conncetion that are currently active*/
-    short active; /* showan:  if 1, it indicates the worker is active and can accept new connections */
-    short  am_i_a_dispatcher_too; /* showan: when worker is inactive, 
-     it morphs to dispather to distribute its own coonection among other active  workers*/
+    bool active; /* showan:  if 1, it indicates the worker is active and can accept new connections */
+    bool  am_i_a_dispatching; /* showan: when worker is hot or cold, it is donating its connections
+      so it can accept any new connections*/
+    enum worker_state w_state; 
+     
  
 
 #ifdef EXTSTORE
@@ -717,6 +726,11 @@ struct conn {
     ssize_t (*read)(conn  *c, void *buf, size_t count);
     ssize_t (*sendmsg)(conn *c, struct msghdr *msg, int flags);
     ssize_t (*write)(conn *c, void *buf, size_t count);
+    long num_ops_over_last_window; /* showan: this one shows number of operations over a window of time */
+    long avg_load; /* showan: avg load of the connection*/
+    unsigned double rate;
+     rel_time_t last_sampling_time;
+    
 };
 
 /* array of conn structures, indexed by file descriptor */

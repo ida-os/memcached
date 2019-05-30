@@ -6536,7 +6536,7 @@ static struct event clockevent;
  * ensure their clocks are correct before starting memcached. */
 static void clock_handler(const int fd, const short which, void *arg) {
     //struct timeval t = {.tv_sec = 1, .tv_usec = 0}; // tshowan
-    struct timeval t = {.tv_sec = 2, .tv_usec = 0};
+    struct timeval t = {.tv_sec = 1, .tv_usec = 0};
     //
     static bool initialized = false;
 #if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_MONOTONIC)

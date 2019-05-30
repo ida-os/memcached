@@ -1037,6 +1037,8 @@ static void conn_set_state(conn *c, enum conn_states state) {
 
 
 /******************************   measuring load and determining when is a good time to denote conns ********/
+long sampling_window;
+sampling_window =1;
 
 /* showan load variables   */
 /*
@@ -6105,11 +6107,11 @@ the question is, is it right to do this here which is crtical path in processing
 the question is which connection- just randomly chooses one????*/
 
 
-    if(c->thread->am_i_a_dispatching)
-    {
-        denote_connection();
+//    if(c->thread->am_i_a_dispatching)
+  //  {
+    //    denote_connection();
 
-    }
+    //}
 
 
 

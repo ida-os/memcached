@@ -5861,7 +5861,8 @@ static void drive_machine(conn *c) {
             c->num_ops_over_last_window ++; /*  showan: connections is handling a new operation*/
             
             int curr_time= current_time;
-              //printf(" current timr %d ", curr_time - c->last_sampling_time  );
+            printf(" total number of requets %ld ", c->num_ops_over_last_window  );
+              /*
               if ( c->num_ops_over_last_window  <=2)
                   c->last_sampling_time = curr_time;
               if (c->num_ops_over_last_window > 500 ){
@@ -5880,6 +5881,8 @@ static void drive_machine(conn *c) {
                printf("rate is: %f \n", c->rate);
                
             }
+
+            */
             
             break;
 

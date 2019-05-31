@@ -6586,7 +6586,7 @@ static void clock_handler(const int fd, const short which, void *arg) {
             return;
         //current_time = (rel_time_t) (ts.tv_sec - monotonic_start); tshowan
         current_time = (rel_time_t) ((((ts.tv_sec - monotonic_start) * 1000000000) + ts.tv_nsec)/ 1000000); //tshowan
-        printf("main timer:----------: %d \n", current_time); //tshowan
+       // printf("main timer:----------: %d \n", current_time); //tshowan
         return;
     }
 #endif

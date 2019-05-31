@@ -5867,8 +5867,10 @@ static void drive_machine(conn *c) {
                 //printf(" current timr %d\n ", curr_time - c->last_sampling_time  );
                 printf(" current time:%d\n ", curr_time   );
                 printf(" num operation %ld \n", c->num_ops_over_last_window );
-               c->rate= c->num_ops_over_last_window/(curr_time - c->last_sampling_time ); //showan
-              
+                int denom= (curr_time - c->last_sampling_time );
+                if (denom  <= 0 ) denom= 1; 
+               //c->rate= c->num_ops_over_last_window/(curr_time - c->last_sampling_time ); //showan
+              c->rate= c->num_ops_over_last_window/ denom; 
                c->num_ops_over_last_window = 0;  // showan 
                c->last_sampling_time= curr_time;  // showan 
                printf("rate is: %f \n", c->rate);

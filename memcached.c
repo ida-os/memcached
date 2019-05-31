@@ -5867,6 +5867,7 @@ static void drive_machine(conn *c) {
               if (c->num_ops_over_last_window > 500 ){
             //if(curr_time != c->last_sampling_time){ // showan //
                 //printf(" current timr %d\n ", curr_time - c->last_sampling_time  );
+                printf(" ------------------------------------\n "
                 printf(" current time:%d\n ", curr_time   );
                 printf("last_sampling_time:%d \n", c->last_sampling_time );
                 printf(" num operation %ld \n", c->num_ops_over_last_window );

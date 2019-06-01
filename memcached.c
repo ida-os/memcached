@@ -5957,7 +5957,7 @@ static void drive_machine(conn *c) {
                 break;
             }
 
-            /* Check if rbytes < 0, to prevent crash */
+            /* Check if rbytes < 0, to prevent crash *///
             if (c->rlbytes < 0) {
                 if (settings.verbose) {
                     fprintf(stderr, "Invalid rlbytes to read: len %d\n", c->rlbytes);

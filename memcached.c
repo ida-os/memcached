@@ -5903,7 +5903,7 @@ static void drive_machine(conn *c) {
                printf("rate is: %f \n", c->rate);
                 printf("thread load is: %f \n", c->thread->load);
 
-                /* balnce load    */
+                /* balnce load    
                 if(pthread_mutex_trylock(&mutex_lb)==0)
                 {
                    if (c->thread->load < lowest_load)
@@ -5941,7 +5941,7 @@ static void drive_machine(conn *c) {
 
 
 
-                }
+                }*/
 
 
                

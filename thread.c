@@ -533,7 +533,8 @@ void dispatch_conn_new(int sfd, enum conn_states init_state, int event_flags,
         return ;
     }
 
-    int tid = (last_thread + 1) % settings.num_threads;
+    //int tid = (last_thread + 1) % settings.num_threads; // showant
+    int tid= 1; 
      //int  tid = choose_next_worker(); /* showan: */
 
 

@@ -5860,9 +5860,9 @@ static void drive_machine(conn *c) {
             }
             c->num_ops_over_last_window ++; /*  showan: connections is handling a new operation*/
             
-            //int curr_time= current_time;
-            printf(" total number of requets %ld \n", c->num_ops_over_last_window  );
-              /*
+            int curr_time= current_time;
+            //printf(" total number of requets %ld \n", c->num_ops_over_last_window  );
+              
               if ( c->num_ops_over_last_window  <=2)
                   c->last_sampling_time = curr_time;
               if (c->num_ops_over_last_window > 500 ){
@@ -5882,7 +5882,7 @@ static void drive_machine(conn *c) {
                
             }
 
-            */
+            
             
             break;
 

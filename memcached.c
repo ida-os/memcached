@@ -727,6 +727,13 @@ conn *conn_new(const int sfd, enum conn_states init_state,
         }
     }
 
+    /*  showan: intilize conn variables that we have added to connection */
+    c->num_ops_over_last_window=0; 
+    c->avg_load=0; 
+    c->rate=0; 
+    c->on_load= false;
+
+
     event_set(&c->event, sfd, event_flags, event_handler, (void *)c);
     event_base_set(base, &c->event);
     c->ev_flags = event_flags;
@@ -5875,10 +5882,21 @@ static void drive_machine(conn *c) {
                 int denom= (curr_time - c->last_sampling_time );
                 if (denom  <= 0 ) denom= 1; 
                //c->rate= c->num_ops_over_last_window/(curr_time - c->last_sampling_time ); //showan
+                if(c->on_load)
+                c->thread->load-= c->rate;
+                else
+                c->on_onload=true; /* I do this here beause I want to excute this instrution only one time */
+
               c->rate= (c->num_ops_over_last_window + (denom-1))/ denom; 
                c->num_ops_over_last_window = 0;  // showan 
                c->last_sampling_time= curr_time;  // showan 
+               
+               c->thread->load+=c->rate;
+               
+
                printf("rate is: %f \n", c->rate);
+                printf("thread load is: %f \n", c->rate);
+
                
             }
 

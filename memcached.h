@@ -729,8 +729,8 @@ struct conn {
     long num_ops_over_last_window; /* showan: this one shows number of operations over a window of time */
     double avg_load; /* showan: avg load of the connection*/
     double rate; /*  showan */
-    bool on_load ; /*showan:  a cheap  variable to chack if conn's rate is on thread or not /
-     rel_time_t last_sampling_time;*/
+    bool on_load ; /*showan:  a cheap  variable to chack if conn's rate is on thread or not */
+     rel_time_t last_sampling_time;
     
 };
 

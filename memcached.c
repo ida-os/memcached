@@ -316,6 +316,10 @@ static void settings_init(void) {
     settings.logger_watcher_buf_size = LOGGER_WATCHER_BUF_SIZE;
     settings.logger_buf_size = LOGGER_BUF_SIZE;
     settings.drop_privileges = false;
+    // =e
+    settings.thread_affinity = false;
+    settings.thread_affinity_offset = 0;
+    //
 #ifdef MEMCACHED_DEBUG
     settings.relaxed_privileges = false;
 #endif
@@ -6527,6 +6531,7 @@ static void clock_handler(const int fd, const short which, void *arg) {
 }
 
 static void usage(void) {
+    // =e added Q and O
     printf(PACKAGE " " VERSION "\n");
     printf("-p, --port=<num>          TCP port to listen on (default: 11211)\n"
            "-U, --udp-port=<num>      UDP port to listen on (default: 0, off)\n"
@@ -6539,6 +6544,8 @@ static void usage(void) {
            "                          disable for specific listeners (-l notls:<ip>:<port>) \n"
 #endif
            "-d, --daemon              run as a daemon\n"
+           "-Q                        set distinct cpu affinity for threads, round-robin\n"
+           "-O                        set cpu affinity offset, starts from this core (default: 0)\n"
            "-r, --enable-coredumps    maximize core file limit\n"
            "-u, --user=<user>         assume identity of <username> (only when run as root)\n"
            "-m, --memory-limit=<num>  item memory in megabytes (default: 64 MB)\n"
@@ -7125,7 +7132,7 @@ int main (int argc, char **argv) {
 
     /* set stderr non-buffering (for running under, say, daemontools) */
     setbuf(stderr, NULL);
-
+    // =e   added O and Q
     char *shortopts =
           "a:"  /* access mask for unix socket */
           "A"  /* enable admin shutdown command */
@@ -7141,6 +7148,8 @@ int main (int argc, char **argv) {
           "r"   /* maximize core file limit */
           "v"   /* verbose */
           "d"   /* daemon mode */
+          "Q"   /* Thread Affinity */
+          "O:"   /* Affinity offset */
           "l:"  /* interface to listen on */
           "u:"  /* user identity to run as */
           "P:"  /* save PID in file */
@@ -7188,6 +7197,7 @@ int main (int argc, char **argv) {
         {"threads", required_argument, 0, 't'},
         {"enable-largepages", no_argument, 0, 'L'},
         {"max-reqs-per-event", required_argument, 0, 'R'},
+        {"affinity-offset", required_argument, 0, 'O'},   // =e add arg for affinity offset
         {"disable-cas", no_argument, 0, 'C'},
         {"listen-backlog", required_argument, 0, 'b'},
         {"protocol", required_argument, 0, 'B'},
@@ -7353,6 +7363,18 @@ int main (int argc, char **argv) {
         case 'b' :
             settings.backlog = atoi(optarg);
             break;
+        // =e
+        case 'Q':
+            settings.thread_affinity = true;
+            break;
+        case 'O':
+            settings.thread_affinity_offset = atoi(optarg);
+            if (settings.thread_affinity_offset < 0) {
+                fprintf(stderr, "Core offset must be greater than 0 and less than number of cpus\n");
+                return 1;
+            }
+            break;
+        //
         case 'B':
             protocol_specified = true;
             if (strcmp(optarg, "auto") == 0) {

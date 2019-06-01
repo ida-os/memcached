@@ -12,6 +12,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+// =e
+#include <sched.h>
+//
 
 #ifdef __sun
 #include <atomic.h>
@@ -295,6 +298,42 @@ static void create_worker(void *(*func)(void *), void *arg) {
     int             ret;
 
     pthread_attr_init(&attr);
+
+    // =e affine threads
+    if (settings.thread_affinity) {
+        const int offset = settings.thread_affinity_offset;
+        static int current_cpu = -1;
+
+        static int max_cpus = 8 * sizeof(cpu_set_t);
+        cpu_set_t m;
+        int i = 0;
+
+        CPU_ZERO(&m);
+        sched_getaffinity(0, sizeof(cpu_set_t), &m);
+        int id = ((LIBEVENT_THREAD*)arg)->eid;
+        for (i = 0; i < max_cpus; i++) {
+            int c = (current_cpu + i + 1) % (max_cpus);
+            if(c < offset)
+                c+=offset;
+            if (CPU_ISSET(c, &m)) {
+                CPU_ZERO(&m);
+                CPU_SET(c, &m);
+
+                if ((ret = pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &m)) != 0) {
+                    fprintf(stderr, "Can't set thread affinity: %s\n",
+                            strerror(ret));
+                    exit(1);
+                }
+
+                if (settings.verbose > 0)
+                    fprintf(stderr, "setting thread %d to cpu %d\n",id , c);
+
+                 current_cpu = c;
+                break;
+            }
+        }
+    }
+    //
 
     if ((ret = pthread_create(&((LIBEVENT_THREAD*)arg)->thread_id, &attr, func, arg)) != 0) {
         fprintf(stderr, "Can't create thread: %s\n",

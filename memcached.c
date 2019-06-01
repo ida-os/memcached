@@ -5908,7 +5908,7 @@ static void drive_machine(conn *c) {
                 {
                    if (c->thread->load < lowest_load)
                    {
-l                    lowest_load = c->thread->load;
+                 lowest_load = c->thread->load;
 
                      thread_with_lowest_load = c->thread;
                      

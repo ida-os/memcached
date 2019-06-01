@@ -152,7 +152,8 @@ void *ext_storage;
 #endif
 
 
-
+/* showan: a lock for load balancing */
+pthread_mutex_t mutex_lb = PTHREAD_MUTEX_INITIALIZER;
 
 
 
@@ -5686,6 +5687,11 @@ static int read_into_chunked_item(conn *c) {
 
 
 
+// showan: it alwyas has the id of the thread with lowest load*/
+ LIBEVENT_THREAD *thread_with_lowest_load;
+ long lowest_load=9999999999 ; 
+
+
 static void drive_machine(conn *c) {
     bool stop = false;
     int sfd;
@@ -5896,6 +5902,47 @@ static void drive_machine(conn *c) {
             printf("--------------\n");
                printf("rate is: %f \n", c->rate);
                 printf("thread load is: %f \n", c->thread->load);
+
+                /* balnce load    */
+                if(pthread_mutex_trylock(&mutex_lb)==0)
+                {
+                   if (c->thread->load < lowest_load)
+                   {
+l                    lowest_load = c->thread->load;
+
+                     thread_with_lowest_load = c->thread;
+                     
+
+                   }
+                   int implance=  c->thread->load- lowest_load; 
+                   if( implance >  20) // fixme it must be  number that indicates it is worth doing migration
+                   {
+                     if(c->rate <  implance)
+                     {  // do the migration
+
+                       if (event_del(&c->event) == -1)  printf("load balance error ***********************\n\n");
+                        c->thread = thread_with_lowest_load;
+                         event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
+                                 event_base_set(c->thread->base, &c->event);
+                                c->state = conn_new_cmd;
+
+                                // TODO: call conn_cleanup/fail/etc
+                    if (event_add(&c->event, 0) == -1) {
+                              printf("load balance error ***********************\n\n");
+                                 }
+
+                     }
+
+
+                   }
+
+                   //unlock the lock 
+                   pthread_mutex_unlock(&mutex_lb);
+
+
+
+                }
+
 
                
             }

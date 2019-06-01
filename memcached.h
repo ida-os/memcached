@@ -730,7 +730,7 @@ struct conn {
     double avg_load; /* showan: avg load of the connection*/
     double rate; /*  showan */
     bool on_load ; /*showan:  a cheap  variable to chack if conn's rate is on thread or not /
-     rel_time_t last_sampling_time;
+     rel_time_t last_sampling_time;*/
     
 };
 

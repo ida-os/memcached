@@ -5885,7 +5885,7 @@ static void drive_machine(conn *c) {
                 if(c->on_load)
                 c->thread->load-= c->rate;
                 else
-                c->on_onload=true; /* I do this here beause I want to excute this instrution only one time */
+                c->on_load=true; /* I do this here beause I want to excute this instrution only one time */
 
               c->rate= (c->num_ops_over_last_window + (denom-1))/ denom; 
                c->num_ops_over_last_window = 0;  // showan 

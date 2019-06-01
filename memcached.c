@@ -5895,7 +5895,7 @@ static void drive_machine(conn *c) {
                
             printf("--------------\n");
                printf("rate is: %f \n", c->rate);
-                printf("thread load is: %f \n", c->rate);
+                printf("thread load is: %f \n", c->thread->load);
 
                
             }

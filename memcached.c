@@ -5875,7 +5875,7 @@ static void drive_machine(conn *c) {
                 int denom= (curr_time - c->last_sampling_time );
                 if (denom  <= 0 ) denom= 1; 
                //c->rate= c->num_ops_over_last_window/(curr_time - c->last_sampling_time ); //showan
-              c->rate= c->num_ops_over_last_window + (denom-1)/ denom; 
+              c->rate= (c->num_ops_over_last_window + (denom-1))/ denom; 
                c->num_ops_over_last_window = 0;  // showan 
                c->last_sampling_time= curr_time;  // showan 
                printf("rate is: %f \n", c->rate);

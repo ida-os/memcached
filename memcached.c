@@ -6178,6 +6178,7 @@ static void drive_machine(conn *c) {
             stop = true;
 
             /*showan we need to reduce the load of the connection from its thread load */
+            /* fixme: it seem that bye is never called*/
             printf("bye******************************************************************************");
             c->thread->load -= c->rate;
             c->thread->active_conn--; /* showan: reduce number of active connections when current connection is closed*/

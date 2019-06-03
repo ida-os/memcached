@@ -5903,9 +5903,16 @@ static void drive_machine(conn *c) {
                printf("rate is: %f \n", c->rate);
                 printf("thread load is: %f \n", c->thread->load);
 
-                /* balnce load    
+                balnce load    
                 if(pthread_mutex_trylock(&mutex_lb)==0)
                 {
+                    if(c->thread ==  thread_with_lowest_load)
+                    {
+
+                            lowest_load = c->thread->load;
+
+                    }
+                    
                    if (c->thread->load < lowest_load)
                    {
                  lowest_load = c->thread->load;
@@ -5913,13 +5920,20 @@ static void drive_machine(conn *c) {
                      thread_with_lowest_load = c->thread;
                      
 
-                   }
-                   int implance=  c->thread->load- lowest_load; 
+                   } 
+                   if(  c->thread->load >  lowest_load )   
+                   {
+                   int avg=     (c->thread->load +lowest_load)/2;
+                   int implance=  c->thread->load- avg; 
                    if( implance >  20) // fixme it must be  number that indicates it is worth doing migration
                    {
                      if(c->rate <  implance)
                      {  // do the migration
 
+                        c->thread->load -= c->rete; 
+                        c->on_load = false;
+
+                         
                        if (event_del(&c->event) == -1)  printf("load balance error ***********************\n\n");
                         c->thread = thread_with_lowest_load;
                          event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
@@ -5934,6 +5948,7 @@ static void drive_machine(conn *c) {
                      }
 
 
+                    }
                    }
 
                    //unlock the lock 
@@ -5941,7 +5956,7 @@ static void drive_machine(conn *c) {
 
 
 
-                }*/
+                }
 
 
                

@@ -5930,7 +5930,7 @@ static void drive_machine(conn *c) {
                      if(c->rate <  implance)
                      {  // do the migration
 
-                        c->thread->load -= c->rete; 
+                        c->thread->load -= c->rate; 
                         c->on_load = false;
 
                          

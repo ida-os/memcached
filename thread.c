@@ -467,7 +467,7 @@ static void thread_libevent_process(int fd, short which, void *arg) {
 
 
 
-    //showan:
+    /*showan:
     case 'z':
     me->load=0;
     me->round++;
@@ -487,7 +487,8 @@ static void thread_libevent_process(int fd, short which, void *arg) {
     
 
 
-    break;    
+    break;  
+    */  
     /* we were told to pause and report in */
     case 'p':
         register_thread_initialized();

@@ -1089,7 +1089,7 @@ void conn_doneate(conn *c) {
     //fixme  -- showan: should we delete a c-> event????  
     //if (event_del(&c->event) == -1)  perror("event_del");
     c->thread = thread;
-    //event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
+     event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
     if (event_base_set(c->thread->base, &c->event)==-1)
     printf("eroooooooooooooooooor");
     c->state = conn_new_cmd;

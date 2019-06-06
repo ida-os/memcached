@@ -1080,7 +1080,7 @@ void conn_doneate(conn *c) {
 
     int new_tid = choose_next_worker();
     LIBEVENT_THREAD *thread = threads + new_tid;
-    printf(tid);
+    printf("hey %d",new_tid);
     if(1)
     return;
     c->ev_flags = EV_READ | EV_PERSIST;

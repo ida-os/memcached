@@ -521,7 +521,8 @@ int tid = (last_thread + 1) % settings.num_threads;
 LIBEVENT_THREAD *thread = threads + tid;
 last_thread = tid;
 int last_thread_t = tid;
-int tid_t;
+/*
+nt tid_t;
 
 for (int i =0; i < settings.num_threads; i++ ){
    tid_t = (last_thread_t++) % settings.num_threads;
@@ -540,6 +541,7 @@ for (int i =0; i < settings.num_threads; i++ ){
    }
    }
 }
+*/
 return tid;
 }
 

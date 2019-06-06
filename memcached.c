@@ -1083,7 +1083,8 @@ void conn_doneate(conn *c) {
     printf("hey %d \n",new_tid);
     if(c->thread != thread)
     {
-         printf("by %d \n",new_tid);
+
+ printf("by %d \n",c->sfd);
     c->ev_flags = EV_READ | EV_PERSIST;
     //fixme  -- showan: should we delete a c-> event????  
     if (event_del(&c->event) == -1)  perror("event_del");
@@ -1091,6 +1092,7 @@ void conn_doneate(conn *c) {
     event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
     event_base_set(c->thread->base, &c->event);
     c->state = conn_new_cmd;
+
 
     // TODO: call conn_cleanup/fail/etc
     if (event_add(&c->event, 0) == -1) {

@@ -128,6 +128,7 @@ static int add_msghdr(conn *c);
 static void write_bin_error(conn *c, protocol_binary_response_status err,
                             const char *errstr, int swallow);
 static void write_bin_miss_response(conn *c, char *key, size_t nkey);
+void conn_doneate(conn *c); // showan
 
 #ifdef EXTSTORE
 static void _get_extstore_cb(void *e, obj_io *io, int ret);
@@ -5862,7 +5863,7 @@ static void drive_machine(conn *c) {
                         if (settings.verbose > 0)
                             fprintf(stderr, "Couldn't update event\n");
                         conn_set_state(c, conn_closing);
-                        break;
+                        break;:
                     }
                 }
                 stop = true;
@@ -5878,7 +5879,7 @@ static void drive_machine(conn *c) {
               if (c->num_ops_over_last_window > 500 ){
             //if(curr_time != c->last_sampling_time){ // showan //
                 //printf(" current timr %d\n ", curr_time - c->last_sampling_time  );
-                /*printf(" ------------------------------------\n ");
+                //printf(" ------------------------------------\n ");
                 printf(" current time:%d\n ", curr_time   );
                 printf("last_sampling_time:%d \n", c->last_sampling_time );
                 printf(" num operation %ld \n", c->num_ops_over_last_window );

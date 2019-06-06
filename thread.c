@@ -510,15 +510,12 @@ static int last_thread = -1;
 
 
 /*showan
-
-
 */
-
 int choose_next_worker()
 {
 
 int tid = (last_thread + 1) % settings.num_threads;
-LIBEVENT_THREAD *thread = threads + tid;
+//LIBEVENT_THREAD *thread = threads + tid;
 last_thread = tid;
 /*int last_thread_t = tid;
 

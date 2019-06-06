@@ -1080,6 +1080,7 @@ void conn_doneate(conn *c) {
 
     int new_tid = choose_next_worker();
     LIBEVENT_THREAD *thread = threads + new_tid;
+    printf(tid);
     c->ev_flags = EV_READ | EV_PERSIST;
     //fixme  -- showan: should we delete a c-> event????  
     if (event_del(&c->event) == -1)  perror("event_del");

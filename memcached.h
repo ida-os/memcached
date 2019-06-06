@@ -848,13 +848,14 @@ void append_stat(const char *name, ADD_STAT add_stats, conn *c,
 
 enum store_item_type store_item(item *item, int comm, conn *c);
 
-
+//
 
 // showan: it alwyas has the id of the thread with lowest load*/
- LIBEVENT_THREAD *thread_with_lowest_load;
- long lowest_load=9999999999 ; 
+ //LIBEVENT_THREAD *thread_with_lowest_load;
+ //long lowest_load=9999999999 ;  we can define and declear a varibale here because memcached.h is inherited by every one
+ // we can only declare as many times as we want 
 /* showan: a lock for load balancing */
-pthread_mutex_t mutex_lb = PTHREAD_MUTEX_INITIALIZER;
+//pthread_mutex_t mutex_lb = PTHREAD_MUTEX_INITIALIZER;
 
 #if HAVE_DROP_PRIVILEGES
 extern void drop_privileges(void);

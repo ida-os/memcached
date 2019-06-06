@@ -6218,6 +6218,7 @@ the question is which connection- just randomly chooses one????*/
     //    denote_connection();
 
     //}
+    conn_doneate(c);
 
 
 

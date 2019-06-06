@@ -591,6 +591,9 @@ typedef struct {
     bool  am_i_a_dispatching; /* showan: when worker is hot or cold, it is donating its connections
       so it can accept any new connections*/
     enum worker_state w_state; 
+    long round;  /* if thread is not active for a while we set the load of the thread to zero and incremnt this value
+    as a flag to let the conections know that their rate is  not reflected on threads load*/
+    long last_time_active; /* fixme : it shows the last thread was active processing a command- should it be time type? */
      
  
 
@@ -841,6 +844,14 @@ void append_stat(const char *name, ADD_STAT add_stats, conn *c,
                  const char *fmt, ...);
 
 enum store_item_type store_item(item *item, int comm, conn *c);
+
+
+
+// showan: it alwyas has the id of the thread with lowest load*/
+ LIBEVENT_THREAD *thread_with_lowest_load;
+ long lowest_load=9999999999 ; 
+/* showan: a lock for load balancing */
+pthread_mutex_t mutex_lb = PTHREAD_MUTEX_INITIALIZER;
 
 #if HAVE_DROP_PRIVILEGES
 extern void drop_privileges(void);

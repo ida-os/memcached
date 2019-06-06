@@ -152,8 +152,7 @@ void *ext_storage;
 #endif
 
 
-/* showan: a lock for load balancing */
-pthread_mutex_t mutex_lb = PTHREAD_MUTEX_INITIALIZER;
+
 
 
 
@@ -1073,7 +1072,7 @@ worker->am_i_a_dispatching = false;
 }
 }
 
-
+*/
 void conn_doneate(conn *c) {
 
     int new_tid = choose_next_worker();
@@ -1093,7 +1092,7 @@ void conn_doneate(conn *c) {
 
 }
 
-*/
+
 
 
 /*
@@ -5687,9 +5686,6 @@ static int read_into_chunked_item(conn *c) {
 
 
 
-// showan: it alwyas has the id of the thread with lowest load*/
- LIBEVENT_THREAD *thread_with_lowest_load;
- long lowest_load=9999999999 ; 
 
 
 static void drive_machine(conn *c) {
@@ -5874,6 +5870,7 @@ static void drive_machine(conn *c) {
             c->num_ops_over_last_window ++; /*  showan: connections is handling a new operation*/
             
             int curr_time= current_time;
+            c->thread->last_time_active =  curr_time; /*showan: last time thread is active* /
             //printf(" total number of requets %ld \n", c->num_ops_over_last_window  );
               
               if ( c->num_ops_over_last_window  <=2)
@@ -5884,14 +5881,14 @@ static void drive_machine(conn *c) {
                 /*printf(" ------------------------------------\n ");
                 printf(" current time:%d\n ", curr_time   );
                 printf("last_sampling_time:%d \n", c->last_sampling_time );
-                printf(" num operation %ld \n", c->num_ops_over_last_window );*/ 
+                printf(" num operation %ld \n", c->num_ops_over_last_window );
                 int denom= (curr_time - c->last_sampling_time );
                 if (denom  <= 0 ) denom= 1; 
                //c->rate= c->num_ops_over_last_window/(curr_time - c->last_sampling_time ); //showan
                 if(c->on_load)
                 c->thread->load-= c->rate;
                 else
-                c->on_load=true; /* I do this here beause I want to excute this instrution only one time */
+                c->on_load=true; // I do this here beause I want to excute this instrution only one time 
 
               c->rate= (c->num_ops_over_last_window + (denom-1))/ denom; 
                c->num_ops_over_last_window = 0;  // showan 
@@ -5961,6 +5958,7 @@ static void drive_machine(conn *c) {
 
                
             }
+            */
 
             
             
@@ -6198,6 +6196,7 @@ static void drive_machine(conn *c) {
             break;
         }
     }
+
 
 
 

@@ -463,6 +463,30 @@ static void thread_libevent_process(int fd, short which, void *arg) {
         }
         cqi_free(item);
         break;
+
+
+
+    //showan:
+    case 'z':
+    me->load=0;
+    me->round++;
+    me->last_time_active= current_time;
+    if(pthread_mutex_trylock(&mutex_lb)==0)// Maybe it never can get this lock. if so what heppen- fixme
+    {
+      
+        if(me->load < lowest_load)
+        {
+            thread_with_lowest_load = me;
+            lowest_load=  me->load; // fixme, I think we should comapre avgload not instant load
+        }
+         pthread_mutex_unlock(&mutex_lb);
+
+    }
+    //load_balncer
+    
+
+
+    break;    
     /* we were told to pause and report in */
     case 'p':
         register_thread_initialized();
@@ -889,6 +913,8 @@ void memcached_thread_init(int nthreads, void *arg) {
         threads[i].active_conn = 0; /*showan */
         threads[i].active= true; /* showan: true means thread is active*/
         threads[i].am_i_a_dispatching = false; /* showan:  0 menas thread does  not dispatch now. Maybe later*/ 
+        threads[i].round=0;
+        threads[i].last_time_active= current_time;
 
     }
 

@@ -1075,7 +1075,7 @@ worker->am_i_a_dispatching = false;
 }
 
 
-
+*/
 void conn_doneate(conn *c) {
 
     int new_tid = choose_next_worker();
@@ -1094,7 +1094,7 @@ void conn_doneate(conn *c) {
     }
 
 }
-*/
+
 
 
 

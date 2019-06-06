@@ -520,8 +520,8 @@ int choose_next_worker()
 int tid = (last_thread + 1) % settings.num_threads;
 LIBEVENT_THREAD *thread = threads + tid;
 last_thread = tid;
-int last_thread_t = tid;
-/*
+/*int last_thread_t = tid;
+
 nt tid_t;
 
 for (int i =0; i < settings.num_threads; i++ ){

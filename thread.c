@@ -80,7 +80,7 @@ unsigned int item_lock_hashpower;
  * Each libevent instance has a wakeup pipe, which other threads
  * can use to signal that they've put a new connection on its queue.
  */
-static LIBEVENT_THREAD *threads;
+//static LIBEVENT_THREAD *threads; // showan: move this to memcached.h to make it accessable in memcached.c
 
 /*
  * Number of worker threads that have finished setting themselves up.

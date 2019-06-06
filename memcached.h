@@ -801,10 +801,13 @@ extern int daemonize(int nochdir, int noclose);
  */
 void memcached_thread_init(int nthreads, void *arg);
 void redispatch_conn(conn *c);
+static LIBEVENT_THREAD *threads; // showan: move this from thread.c
 int choose_next_worker(void); /* showan: */
+
 void dispatch_conn_new(int sfd, enum conn_states init_state, int event_flags, int read_buffer_size,
     enum network_transport transport, void *ssl);
 void sidethread_conn_close(conn *c);
+
 
 /* Lock wrappers for cache functions that are called from main loop. */
 enum delta_result_type add_delta(conn *c, const char *key,

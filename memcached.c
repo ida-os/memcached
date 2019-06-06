@@ -1081,8 +1081,8 @@ void conn_doneate(conn *c) {
     int new_tid = choose_next_worker();
     LIBEVENT_THREAD *thread = threads + new_tid;
     printf("hey %d \n",new_tid);
-    if(1)
-    return;
+    if(c->thread != thread)
+    {
     c->ev_flags = EV_READ | EV_PERSIST;
     //fixme  -- showan: should we delete a c-> event????  
     if (event_del(&c->event) == -1)  perror("event_del");
@@ -1094,6 +1094,7 @@ void conn_doneate(conn *c) {
     // TODO: call conn_cleanup/fail/etc
     if (event_add(&c->event, 0) == -1) {
         perror("event_add");
+    }
     }
 
 }

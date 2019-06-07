@@ -1076,7 +1076,7 @@ if(c->state == conn_closed || c->state == conn_closing )
 return;
     //int new_tid = choose_next_worker();
     //LIBEVENT_THREAD *thread = threads + new_tid;
-    printf("the for the connection is  %d \n",c->state);
+    //printf("the for the connection is  %d \n",c->state);
    // printf("hey %d \n",new_tid);
     
     if(c->thread != NULL)
@@ -1089,7 +1089,7 @@ return;
     //c->thread = thread;
     event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
     if (event_base_set(c->thread->base, &c->event)==-1)
-    printf("eroooooooooooooooooor");
+    //printf("eroooooooooooooooooor");
     //c->state = conn_new_cmd;
     // TODO: call conn_cleanup/fail/etc
     if (event_add(&c->event, 0) == -1) {

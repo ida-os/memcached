@@ -1074,10 +1074,10 @@ void conn_doneate(conn *c) {
 
     //int new_tid = choose_next_worker();
     //LIBEVENT_THREAD *thread = threads + new_tid;
-    //printf("the fd for the connection is  %d \n",c->sfd);
-    //printf("hey %d \n",new_tid);
-    
-    if(c->thread != thread)
+    printf("the for the connection is  %d \n",c->state);
+   // printf("hey %d \n",new_tid);
+    /*
+    if(c->thread != NULL)
     {
 
 //printf("by %d \n",c->sfd);
@@ -1094,6 +1094,8 @@ void conn_doneate(conn *c) {
         perror("event_add");
     }
     }
+
+    */
 
 }
 

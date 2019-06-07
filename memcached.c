@@ -1076,9 +1076,9 @@ if(c->state == conn_closed || c->state == conn_closing )
 return;
     //int new_tid = choose_next_worker();
     //LIBEVENT_THREAD *thread = threads + new_tid;
-    //printf("the for the connection is  %d \n",c->state);
+    printf("the for the connection is  %d \n",c->state);
    // printf("hey %d \n",new_tid);
-    /*
+    
     if(c->thread != NULL)
     {
 
@@ -1097,7 +1097,7 @@ return;
     }
     }
 
-*/
+
 
 }
 

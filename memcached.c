@@ -6186,7 +6186,7 @@ static void drive_machine(conn *c) {
 
             /*showan we need to reduce the load of the connection from its thread load */
             /* fixme: it seem that bye is never called*/
-            printf("bye******************************************************************************");
+           // printf("bye******************************************************************************");
             c->thread->load -= c->rate;
             c->thread->active_conn--; /* showan: reduce number of active connections when current connection is closed*/
             break;
@@ -6695,7 +6695,7 @@ static void clock_handler(const int fd, const short which, void *arg) {
     }
 #endif
     {
-        printf("inside timer: %d \n", current_time); //tshowan
+        //printf("inside timer: %d \n", current_time); //tshowan
         struct timeval tv;
         gettimeofday(&tv, NULL);
         //current_time = (rel_time_t) (tv.tv_sec - process_started); //tshowan

@@ -1089,7 +1089,7 @@ return;
     //c->thread = thread;
     event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
     if (event_base_set(c->thread->base, &c->event)==-1)
-    //printf("eroooooooooooooooooor");
+    printf("eroooooooooooooooooor");
     //c->state = conn_new_cmd;
     // TODO: call conn_cleanup/fail/etc
    // if (event_add(&c->event, 0) == -1) {

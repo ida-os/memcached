@@ -606,7 +606,17 @@ void donate_conn(conn *c) {
         close(c->sfd);
         return;
     }
-    LIBEVENT_THREAD *thread = threads;
+    int eid = c->thread->eid;;
+    LIBEVENT_THREAD *thread;
+    do{
+        eid++;
+        if(eid == settings.num_threads)
+            eid = 0;
+        thread = threads+eid;
+        
+    }
+    while(!thread->active);
+    
     c->thread = thread;
     item->sfd = c->sfd;
     item->init_state = conn_new_cmd;

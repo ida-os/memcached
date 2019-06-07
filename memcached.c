@@ -752,7 +752,8 @@ conn *reinitialize_events(conn *c) {
         return NULL;
     }
     c->thread->connections++;
-    fprintf(stderr, "thread %d received c=%d, connections=%d\n", c->thread->eid, c->sfd, c->thread->connections);
+    if (settings.verbose > 0)
+        fprintf(stderr, "thread %d received c=%d, connections=%d\n", c->thread->eid, c->sfd, c->thread->connections);
 
     return c;
 }
@@ -6052,10 +6053,12 @@ static void drive_machine(conn *c) {
         // fprintf(stderr,"Thread %lu, gets %lu\n", c->thread->thread_id, c->thread->stats.get_cmds);
         if(!c->thread->mother && !(c->thread->stats.get_cmds % 100000)) {
             c->thread->active = false;
-            fprintf(stderr, "Signing off %d, conns: %d\n", c->thread->eid, c->thread->connections);
+            if (settings.verbose > 0)
+                fprintf(stderr, "Signing off %d, conns: %d\n", c->thread->eid, c->thread->connections);
         }
         if(!c->thread->active) {
-            fprintf(stderr, "%d donating con %d , conns: %d\n", c->thread->eid, c->sfd, c->thread->connections);
+            if (settings.verbose > 0)
+                fprintf(stderr, "%d donating con %d , conns: %d\n", c->thread->eid, c->sfd, c->thread->connections);
             c->thread->connections--;
             event_del(&c->event);
             donate_conn(c);

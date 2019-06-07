@@ -153,12 +153,6 @@ volatile int slab_rebalance_signal;
 void *ext_storage;
 #endif
 
-
-
-
-
-
-
 /** file scope variables **/
 static conn *listen_conn = NULL;
 static int max_fds;
@@ -1080,26 +1074,26 @@ void conn_doneate(conn *c) {
 
     int new_tid = choose_next_worker();
     LIBEVENT_THREAD *thread = threads + new_tid;
+    printf("the fd for the connection is \n",c->sfd);
     //printf("hey %d \n",new_tid);
+    /*
     if(c->thread != thread)
     {
 
  printf("by %d \n",c->sfd);
     c->ev_flags = EV_READ | EV_PERSIST;
     //fixme  -- showan: should we delete a c-> event????  
-    //if (event_del(&c->event) == -1)  perror("event_del");
+    if (event_del(&c->event) == -1)  perror("event_del");
     c->thread = thread;
-     event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
+    event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
     if (event_base_set(c->thread->base, &c->event)==-1)
     printf("eroooooooooooooooooor");
     c->state = conn_new_cmd;
-
-
     // TODO: call conn_cleanup/fail/etc
     if (event_add(&c->event, 0) == -1) {
         perror("event_add");
     }
-    }
+    }*/
 
 }
 

@@ -1074,7 +1074,7 @@ void conn_doneate(conn *c) {
 
     int new_tid = choose_next_worker();
     LIBEVENT_THREAD *thread = threads + new_tid;
-    printf("the fd for the connection is \n",c->sfd);
+    printf("the fd for the connection is  %d \n",c->sfd);
     //printf("hey %d \n",new_tid);
     /*
     if(c->thread != thread)

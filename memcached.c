@@ -1078,7 +1078,7 @@ return;
     //LIBEVENT_THREAD *thread = threads + new_tid;
     //printf("the for the connection is  %d \n",c->state);
    // printf("hey %d \n",new_tid);
-    
+    /*
     if(c->thread != NULL)
     {
 
@@ -1097,7 +1097,7 @@ return;
     }
     }
 
-
+*/
 
 }
 

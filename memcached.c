@@ -1085,7 +1085,7 @@ return;
 //printf("by %d \n",c->sfd);
     c->ev_flags = EV_READ | EV_PERSIST;
     //fixme  -- showan: should we delete a c-> event????  
-    if (event_del(&c->event) == -1)  perror("event_del");
+    //if (event_del(&c->event) == -1)  perror("event_del");
     //c->thread = thread;
     event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
     if (event_base_set(c->thread->base, &c->event)==-1)

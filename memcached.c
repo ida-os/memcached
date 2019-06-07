@@ -1092,9 +1092,9 @@ return;
     printf("eroooooooooooooooooor");
     //c->state = conn_new_cmd;
     // TODO: call conn_cleanup/fail/etc
-   // if (event_add(&c->event, 0) == -1) {
-    //    perror("event_add");
-    //}
+      if (event_add(&c->event, 0) == -1) {
+        perror("event_add");
+     }
     }
 
 

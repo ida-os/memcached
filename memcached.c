@@ -1094,7 +1094,7 @@ return;
     // TODO: call conn_cleanup/fail/etc
    // if (event_add(&c->event, 0) == -1) {
     //    perror("event_add");
-    }
+    //}
     }
 
 

@@ -1074,17 +1074,17 @@ void conn_doneate(conn *c) {
 
     //int new_tid = choose_next_worker();
     //LIBEVENT_THREAD *thread = threads + new_tid;
-    printf("the fd for the connection is  %d \n",c->sfd);
+    //printf("the fd for the connection is  %d \n",c->sfd);
     //printf("hey %d \n",new_tid);
-    /*
+    
     if(c->thread != thread)
     {
 
- printf("by %d \n",c->sfd);
+//printf("by %d \n",c->sfd);
     c->ev_flags = EV_READ | EV_PERSIST;
     //fixme  -- showan: should we delete a c-> event????  
     if (event_del(&c->event) == -1)  perror("event_del");
-    c->thread = thread;
+    //c->thread = thread;
     event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
     if (event_base_set(c->thread->base, &c->event)==-1)
     printf("eroooooooooooooooooor");
@@ -1093,7 +1093,7 @@ void conn_doneate(conn *c) {
     if (event_add(&c->event, 0) == -1) {
         perror("event_add");
     }
-    }*/
+    }
 
 }
 

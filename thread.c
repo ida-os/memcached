@@ -335,15 +335,17 @@ static void power_saving_libevent(int fd, short which, void *arg) {
     if (read(fd, buf, 1) != 1) {
         if (settings.verbose > 0)
             fprintf(stderr, "Can't read from libevent pipe\n");
+            printf("shown- did not get the message");
         return;
     }
 
     switch (buf[0]) {
     case 'l': // load
         // check if victim is cahnging
+        printf("hi");
         if(me->load < power_stat.lowest_load)
         {   
-            printf("hi");
+            
             power_stat.lowest_load = me->load;
             power_stat.victim_worker= me->index;
         }

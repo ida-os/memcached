@@ -735,7 +735,7 @@ conn *conn_new(const int sfd, enum conn_states init_state,
     c->rate=0; 
     c->on_load= false;
     c->capcity=0;
-    c->highest_rate=0
+    c->highest_rate=0;
     c->home=0;
 
 

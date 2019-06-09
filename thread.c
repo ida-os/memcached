@@ -342,7 +342,8 @@ static void power_saving_libevent(int fd, short which, void *arg) {
     case 'l': // load
         // check if victim is cahnging
         if(me->load < power_stat.lowest_load)
-        {
+        {   
+            printf("hi");
             power_stat.lowest_load = me->load;
             power_stat.victim_worker= me->index;
         }
@@ -350,6 +351,7 @@ static void power_saving_libevent(int fd, short which, void *arg) {
     case 'c' : // capacity
          if (me->capacity > power_stat.highets_capacity )
          {
+              printf("bye");
               power_stat.highets_capacity = me->capacity;
               power_stat.attacaker= me->index;
 

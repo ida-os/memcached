@@ -5888,7 +5888,11 @@ static void drive_machine(conn *c) {
             c->num_ops_over_last_window ++; /*  showan: connections is handling a new operation*/
             
             int curr_time= current_time;
-            c->thread->last_time_active =  curr_time; /*showan: last time thread is active* /
+            c->thread->last_time_active =  curr_time; 
+            char buf[1];
+            buf[0]= 'l';
+            write(c->thread->send_power_msg, buf, 1);
+            /*showan: last time thread is active* /
             //printf(" total number of requets %ld \n", c->num_ops_over_last_window  );
               
               if ( c->num_ops_over_last_window  <=2)

@@ -374,53 +374,6 @@ static int add_msghdr(conn *c)
     return 0;
 }
 
-// showan: powoer saving approch
-
-struct power_saving
-{
-int victim_worker;
-int attacaker;
-double lowest_load;
-double highets_capacity;
-double attacker_worker;
-
-}power_stat;
-// 
-static void power_saving_libevent(int fd, short which, void *arg) {
-    LIBEVENT_THREAD *me = arg;
-    CQ_ITEM *item;
-    char buf[1];
-    conn *c;
-    unsigned int timeout_fd;
-
-    if (read(fd, buf, 1) != 1) {
-        if (settings.verbose > 0)
-            fprintf(stderr, "Can't read from libevent pipe\n");
-        return;
-    }
-
-    switch (buf[0]) {
-    case 'l': // load
-        // check if victim is cahnging
-        if(me->load < power_stat.lowest_load)
-        {
-            power_stat.lowest_load = me->load;
-            power_stat.victim_worker= me->index;
-        }
-    break;
-    case 'c' : // capacity
-         if (me->capacity > highets_capacity )
-         {
-              power_stat.highets_capacity = me->capacity;
-              power_stat.attacaker= me->index;
-
-         }
-         break;
-    }
-    
-        
-}
-
 
 
 

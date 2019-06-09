@@ -330,10 +330,7 @@ double attacker_worker;
 // 
 static void power_saving_libevent(int fd, short which, void *arg) {
     LIBEVENT_THREAD *me = arg;
-    CQ_ITEM *item;
     char buf[1];
-    conn *c;
-    unsigned int timeout_fd;
 
     if (read(fd, buf, 1) != 1) {
         if (settings.verbose > 0)

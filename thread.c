@@ -348,7 +348,7 @@ static void power_saving_libevent(int fd, short which, void *arg) {
         }
     break;
     case 'c' : // capacity
-         if (me->capacity > highets_capacity )
+         if (me->capacity > power_stat.highets_capacity )
          {
               power_stat.highets_capacity = me->capacity;
               power_stat.attacaker= me->index;
@@ -984,8 +984,8 @@ void memcached_thread_init(int nthreads, void *arg) {
        if (pipe(power_fds)) {
         printf("errror creating power msg saving");
         }
-        thread[i].send_power_msg = power_fds[1];
-        thread[i].reciv_power_msg = power_fds[0];
+        threads[i].send_power_msg = power_fds[1];
+        threads[i].reciv_power_msg = power_fds[0];
 
 
 

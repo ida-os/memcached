@@ -90,6 +90,9 @@ static int init_count = 0;
 static pthread_mutex_t init_lock;
 static pthread_cond_t init_cond;
 
+// showan:  decleare  this variable that is defined in memcached.c
+extern struct event_base *main_base;
+
 
 static void thread_libevent_process(int fd, short which, void *arg);
 
@@ -311,6 +314,59 @@ void accept_new_conns(const bool do_accept) {
     do_accept_new_conns(do_accept);
     pthread_mutex_unlock(&conn_lock);
 }
+
+/******************************POWER MANAGMENT *********************************/
+// showan: powoer saving approch
+
+struct power_saving
+{
+int victim_worker;
+int attacaker;
+double lowest_load;
+double highets_capacity;
+double attacker_worker;
+
+}power_stat;
+// 
+static void power_saving_libevent(int fd, short which, void *arg) {
+    LIBEVENT_THREAD *me = arg;
+    CQ_ITEM *item;
+    char buf[1];
+    conn *c;
+    unsigned int timeout_fd;
+
+    if (read(fd, buf, 1) != 1) {
+        if (settings.verbose > 0)
+            fprintf(stderr, "Can't read from libevent pipe\n");
+        return;
+    }
+
+    switch (buf[0]) {
+    case 'l': // load
+        // check if victim is cahnging
+        if(me->load < power_stat.lowest_load)
+        {
+            power_stat.lowest_load = me->load;
+            power_stat.victim_worker= me->index;
+        }
+    break;
+    case 'c' : // capacity
+         if (me->capacity > highets_capacity )
+         {
+              power_stat.highets_capacity = me->capacity;
+              power_stat.attacaker= me->index;
+
+         }
+         break;
+    }
+    
+        
+}
+
+
+
+
+
 /****************************** LIBEVENT THREADS *****************************/
 
 /*
@@ -337,10 +393,29 @@ static void setup_thread(LIBEVENT_THREAD *me) {
               EV_READ | EV_PERSIST, thread_libevent_process, me);
     event_base_set(me->base, &me->notify_event);
 
+
+
     if (event_add(&me->notify_event, 0) == -1) {
         fprintf(stderr, "Can't monitor libevent notify pipe\n");
         exit(1);
     }
+
+ // showan: create a communication channel between threads and power mangment
+
+
+ /* Listen for notifications from other threads */
+    event_set(&me->power_mng_event, me->reciv_power_msg,
+              EV_READ | EV_PERSIST, power_saving_libevent, me);
+    event_base_set(main_base, &me->power_mng_event);
+
+
+
+    if (event_add(&me->power_mng_event, 0) == -1) {
+        fprintf(stderr, "Can't monitor libevent notify pipe\n");
+        exit(1);
+    }
+ 
+
 
     me->new_conn_queue = malloc(sizeof(struct conn_queue));
     if (me->new_conn_queue == NULL) {
@@ -449,6 +524,8 @@ static void thread_libevent_process(int fd, short which, void *arg) {
                 } else {
                     c->thread = me;
                     me->active_conn++; /* showan: increase the connecton number of thread by one*/
+                    c->home =me->index;  /* showa
+                    */
 #ifdef TLS
                     if (settings.ssl_enabled && c->ssl != NULL) {
                         assert(c->thread && c->thread->ssl_wbuf);
@@ -904,6 +981,17 @@ void memcached_thread_init(int nthreads, void *arg) {
 
         threads[i].notify_receive_fd = fds[0];
         threads[i].notify_send_fd = fds[1];
+
+       // showan: create a pipe to tarnfer  power mangament data
+       int power_fds[2];
+       if (pipe(power_fds)) {
+        printf("errror creating power msg saving");
+        }
+        thread[i].send_power_msg = power_fds[1];
+        thread[i].reciv_power_msg = power_fds[0];
+
+
+
 #ifdef EXTSTORE
         threads[i].storage = arg;
 #endif
@@ -916,7 +1004,10 @@ void memcached_thread_init(int nthreads, void *arg) {
         threads[i].am_i_a_dispatching = false; /* showan:  0 menas thread does  not dispatch now. Maybe later*/ 
         threads[i].round=0;
         threads[i].last_time_active= current_time;
-
+        threads[i].capacity=0;
+        threads[i].index=i;
+        
+       
     }
 
     /* Create threads after we've done all the libevent setup. */

@@ -586,14 +586,20 @@ typedef struct {
     struct conn_queue *new_conn_queue; /* queue of new connections to handle */
     cache_t *suffix_cache;      /* suffix cache */
     double load;   /* showan: the total number of requests over a the past window*/
+    double capacity; /*showan: it determines the capacity of the system*/
     long active_conn; /* showan: number of conncetion that are currently active*/
     bool active; /* showan:  if 1, it indicates the worker is active and can accept new connections */
-    bool  am_i_a_dispatching; /* showan: when worker is hot or cold, it is donating its connections
+    bool  am_i_a_dispatching; /* showan: 
+    hen worker is hot or cold, it is donating its connections
       so it can accept any new connections*/
     enum worker_state w_state; 
     long round;  /* if thread is not active for a while we set the load of the thread to zero and incremnt this value
     as a flag to let the conections know that their rate is  not reflected on threads load*/
     long last_time_active; /* fixme : it shows the last thread was active processing a command- should it be time type? */
+    int index;
+    struct event power_mng_event;  /* listen event for notify pipe */
+    int send_power_msg;
+    int reciv_power_msg;
      
  
 
@@ -734,6 +740,9 @@ struct conn {
     double rate; /*  showan */
     bool on_load ; /*showan:  a cheap  variable to chack if conn's rate is on thread or not */
      rel_time_t last_sampling_time;
+     double  highest_rate;
+     double capcity; 
+     int home; 
     
 };
 

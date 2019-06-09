@@ -5891,7 +5891,9 @@ static void drive_machine(conn *c) {
             c->thread->last_time_active =  curr_time; 
             char buf[1];
             buf[0]= 'l';
-            write(c->thread->send_power_msg, buf, 1);
+            if(write(c->thread->send_power_msg, buf, 1) != 1)
+            printf("error in sending message to dispatcher");
+
             /*showan: last time thread is active* /
             //printf(" total number of requets %ld \n", c->num_ops_over_last_window  );
               

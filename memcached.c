@@ -5976,7 +5976,7 @@ static void drive_machine(conn *c) {
                printf("--------------\n");
                printf("rate is: %f \n", c->rate);
                printf("thread load is: %f \n", c->thread->load);
-               /*
+               
                if(c->thread->load < power_stat.lowest_load)
                {
                    
@@ -5986,7 +5986,7 @@ static void drive_machine(conn *c) {
             printf("error in sending message to dispatcher");
 
                }
-               */
+               
                
                 /*balnce load    
                 if(pthread_mutex_trylock(&mutex_lb)==0)
@@ -6044,9 +6044,9 @@ static void drive_machine(conn *c) {
                 } 
               
 
-
+                  */ 
                
-            } */ 
+            } 
            
 
             

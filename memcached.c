@@ -5979,7 +5979,7 @@ static void drive_machine(conn *c) {
                {
                    
              power_msg[0]= 'l';
-            if(write(c->thread->send_power_msg, power_msg, 1) != 1)
+            //if(write(c->thread->send_power_msg, power_msg, 1) != 1)
             printf("error in sending message to dispatcher");
 
                }
@@ -6321,7 +6321,7 @@ the question is which connection- just randomly chooses one????*/
 
     }
 
-
+    
     return;
 }
 

@@ -6305,9 +6305,9 @@ the question is which connection- just randomly chooses one????*/
 //
     //}
     
-    if(c!=NULL)
+    if(c->thread!=NULL)
     {
-    if(power_stat.victim_worker == c->capcity)
+    if(power_stat.victim_worker == c->thread->index)
     if (power_stat.load_balancing== true){
     
     c->is_guest = true;

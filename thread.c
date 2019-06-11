@@ -28,7 +28,7 @@
 enum conn_queue_item_modes {
     queue_new_conn,   /* brand new connection. */
     queue_redispatch, /* redispatching from side thread */
-    queue_transfer ; /*showan: whan we  tranfer a coonection*/
+    queue_transfer  /*showan: whan we  tranfer a coonection*/
 };
 
 typedef struct conn_queue_item CQ_ITEM;
@@ -330,7 +330,7 @@ double highets_capacity;
 bool load_balancing;
 }
 */
-struct power_saving power_stat {-1, -1, 0, 0,false};
+struct power_saving power_stat = {-1, -1, 0, 0,false};
 // 
 static void power_saving_libevent(int fd, short which, void *arg) {
     LIBEVENT_THREAD *me = arg;

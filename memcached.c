@@ -5937,14 +5937,15 @@ static void drive_machine(conn *c) {
                 }
                 stop = true;
             }
-            c->num_ops_over_last_window ++; /*  showan: connections is handling a new operation*/
+            /*
+            c->num_ops_over_last_window ++; //  showan: connections is handling a new operation
             
             int curr_time= current_time;
             c->thread->last_time_active =  curr_time; 
             char power_msg[1];
             
 
-              /*showan: last time thread is active  */
+              //showan: last time thread is active  
             //printf(" total number of requets %ld \n", c->num_ops_over_last_window  );
               
               if ( c->num_ops_over_last_window  <=2)
@@ -5979,14 +5980,13 @@ static void drive_machine(conn *c) {
                {
                    
              power_msg[0]= 'l';
-             int a = power_msg[0];
-             a = a+1;
-            //if(write(c->thread->send_power_msg, power_msg, 1) != 1)
+             
+            if(write(c->thread->send_power_msg, power_msg, 1) != 1)
             printf("error in sending message to dispatcher");
 
                }
 
-
+                */
                 /*balnce load    
                 if(pthread_mutex_trylock(&mutex_lb)==0)
                 {
@@ -6304,6 +6304,7 @@ the question is which connection- just randomly chooses one????*/
 //
     //}
     
+    /*
     if(power_stat.victim_worker == c->thread->index)
     if (power_stat.load_balancing== true){
     
@@ -6322,7 +6323,7 @@ the question is which connection- just randomly chooses one????*/
       }
 
     }
-
+    */
     
     return;
 }

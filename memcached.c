@@ -6041,11 +6041,11 @@ static void drive_machine(conn *c) {
 
 
                 } 
-               */ 
+              
 
 
                
-            }
+            } */ 
            
 
             
@@ -6288,7 +6288,7 @@ static void drive_machine(conn *c) {
 
 
 
-/* showan: check the load to set the state of the worker
+/*showan: check the load to set the state of the worker
 the question is, is it right to do this here which is crtical path in processing memcached requests
 */
 // check_worker_status(c->thread);
@@ -6304,7 +6304,7 @@ the question is which connection- just randomly chooses one????*/
 //
     //}
     
-    /*
+    
     if(power_stat.victim_worker == c->thread->index)
     if (power_stat.load_balancing== true){
     
@@ -6323,7 +6323,7 @@ the question is which connection- just randomly chooses one????*/
       }
 
     }
-    */
+   
     
     return;
 }

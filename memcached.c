@@ -1157,14 +1157,14 @@ void conn_transfer2()
     char buf[1];
     if (item == NULL) {
         close(sfd);
-        /* given that malloc failed this may also fail, but let's try */
+        // given that malloc failed this may also fail, but let's try 
         fprintf(stderr, "Failed to allocate memory for connection object\n");
         return ;
     }
     
     int tid = (last_thread + 1) % settings.num_threads; // showant
     //int tid= 1; 
-     //int  tid = choose_next_worker(); /* showan: */
+     //int  tid = choose_next_worker(); 
 
 
 

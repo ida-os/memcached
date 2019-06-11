@@ -459,7 +459,15 @@ extern struct stats stats;
 extern struct stats_state stats_state;
 extern time_t process_started;
 extern struct settings settings;
-extern struct power_saving power_stat; //showan
+struct power_saving // showan power saving data structure
+{
+int victim_worker;
+int attacker;
+double lowest_load;
+double highets_capacity;
+bool load_balancing;
+};
+
 
 #define ITEM_LINKED 1
 #define ITEM_CAS 2

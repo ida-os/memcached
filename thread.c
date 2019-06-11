@@ -320,7 +320,7 @@ void accept_new_conns(const bool do_accept) {
 
 /******************************POWER MANAGMENT *********************************/
 // showan: powoer saving approch
-
+/*
 struct power_saving
 {
 int victim_worker;
@@ -328,7 +328,9 @@ int attacker;
 double lowest_load;
 double highets_capacity;
 bool load_balancing;
-}power_stat {-1, -1, 0, 0,false};
+}
+*/
+struct power_saving power_stat {-1, -1, 0, 0,false};
 // 
 static void power_saving_libevent(int fd, short which, void *arg) {
     LIBEVENT_THREAD *me = arg;

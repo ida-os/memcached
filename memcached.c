@@ -129,7 +129,7 @@ static void write_bin_error(conn *c, protocol_binary_response_status err,
                             const char *errstr, int swallow);
 static void write_bin_miss_response(conn *c, char *key, size_t nkey);
 extern  LIBEVENT_THREAD *threads; //showan
-extern struct power_saving power_stat;
+extern struct power_saving power_stat; //showan
 void conn_doneate(conn *c); // showan
 
 #ifdef EXTSTORE
@@ -5765,6 +5765,7 @@ static void drive_machine(conn *c) {
     int nreqs = settings.reqs_per_event;
     int res;
     const char *str;
+    bool guests_should_go_home = false; // showan: should we send guests home 
 #ifdef HAVE_ACCEPT4
     static int  use_accept4 = 1;
 #else

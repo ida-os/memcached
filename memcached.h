@@ -577,7 +577,7 @@ cold
 };
 
 
-// showan: I trnasfeered the following from thread.c
+/*
 typedef struct conn_queue_item CQ_ITEM;
 struct conn_queue_item {
     int               sfd;
@@ -590,6 +590,7 @@ struct conn_queue_item {
     void    *ssl;
     CQ_ITEM          *next;
 };
+*/
 
 typedef struct {
     pthread_t thread_id;        /* unique ID of this thread */

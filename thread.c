@@ -2,6 +2,7 @@
 /*
  * Thread management for memcached.
  */
+
 #include "memcached.h"
 #ifdef EXTSTORE
 #include "storage.h"
@@ -29,7 +30,7 @@ enum conn_queue_item_modes {
     queue_redispatch, /* redispatching from side thread */
     queue_transfer ; /*showan: whan we  tranfer a coonection*/
 };
-/* showan fixmefixme I transfer the followinf file to memcached.h because I need that in memcached.c
+
 typedef struct conn_queue_item CQ_ITEM;
 struct conn_queue_item {
     int               sfd;
@@ -42,11 +43,11 @@ struct conn_queue_item {
     void    *ssl;
     CQ_ITEM          *next;
 };
-*/
+
 /* A connection queue. */
 typedef struct conn_queue CQ;
 struct conn_queue {
-    CQ_ITEM *head;
+    CQ_ITEM *head; 
     CQ_ITEM *tail;
     pthread_mutex_t lock;
 };
@@ -323,7 +324,7 @@ void accept_new_conns(const bool do_accept) {
 struct power_saving
 {
 int victim_worker;
-int attacaker;
+int attacker;
 double lowest_load;
 double highets_capacity;
 bool load_balancing;
@@ -355,7 +356,7 @@ static void power_saving_libevent(int fd, short which, void *arg) {
          if (me->capacity > power_stat.highets_capacity )
          {
               power_stat.highets_capacity = me->capacity;
-              power_stat.attacaker= me->index;
+              power_stat.attacker= me->index;
 
          }
          break;

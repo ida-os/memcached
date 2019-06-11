@@ -1081,6 +1081,7 @@ worker->am_i_a_dispatching = false;
 
 
 */
+/*
 void conn_transfer(conn *c, bool go_to_attacker, bool go_home) {
 
 if(c->state == conn_closed || c->state == conn_closing )
@@ -1112,7 +1113,7 @@ return;
 
 
 }
-
+*/
 void conn_transfer3(conn *c, bool go_to_attacker, bool go_home)
 {
 
@@ -1120,9 +1121,9 @@ if(c->state == conn_closed || c->state == conn_closing )
 return;
 LIBEVENT_THREAD *thread ;
 if (go_to_attacker)
-    thread= threads[power_stat->attacker];
+    thread= threads +power_stat.attacker;
 else    
-thread= threads[c->home];
+thread= threads+c->home;
 c->thread=  thread;
     CQ_ITEM *item = cqi_new();
     char buf[1];
@@ -1146,7 +1147,7 @@ c->thread=  thread;
     }
 }
 
-
+/*
 
 void conn_transfer2()
 {
@@ -1188,7 +1189,7 @@ void conn_transfer2()
     }
 }
 
-
+*/
 
 
 
@@ -6331,8 +6332,8 @@ the question is which connection- just randomly chooses one????*/
 
     //}
     
-    if(power_stat->victim_worker == c->thread)
-    if (power_stat->load_balancing== true){
+    if(power_stat.ictim_worker == c->thread)
+    if (power_stat.load_balancing== true){
     
     c->is_guest = true;
      conn_transfer(c, true, false);

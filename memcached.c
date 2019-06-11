@@ -6307,7 +6307,7 @@ the question is which connection- just randomly chooses one????*/
     
     if(c!=NULL)
     {
-    if(power_stat.victim_worker == c->thread->index)
+    if(power_stat.victim_worker == c->thread->load)
     if (power_stat.load_balancing== true){
     
     c->is_guest = true;

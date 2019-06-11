@@ -5974,11 +5974,11 @@ static void drive_machine(conn *c) {
                printf("--------------\n");
                printf("rate is: %f \n", c->rate);
                printf("thread load is: %f \n", c->thread->load);
-               if(c->thread->load < power_stat->lowest_load)
+               if(c->thread->load < power_stat.lowest_load)
                {
                    
              power_msg[0]= 'l';
-            if(write(c->thread->send_power_msg, buf, 1) != 1)
+            if(write(c->thread->send_power_msg, power_msg, 1) != 1)
             printf("error in sending message to dispatcher");
 
                }
@@ -6314,7 +6314,7 @@ the question is which connection- just randomly chooses one????*/
       {
        c->thread->number_of_guest --; // w know c->thread is not his/her home
        c->is_guest= false;
-       conn_transfer(c, false, true);
+       conn_transfer3(c, false, true);
 
       }
 

@@ -835,7 +835,7 @@ void dispatch_conn_new(int sfd, enum conn_states init_state, int event_flags, in
     enum network_transport transport, void *ssl);
 void sidethread_conn_close(conn *c);
 
-
+void conn_transfer3(conn *c, bool go_to_attacker, bool go_home); // showan:
 /* Lock wrappers for cache functions that are called from main loop. */
 enum delta_result_type add_delta(conn *c, const char *key,
                                  const size_t nkey, bool incr,

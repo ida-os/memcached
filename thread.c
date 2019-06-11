@@ -368,6 +368,41 @@ static void power_saving_libevent(int fd, short which, void *arg) {
 
 
 
+void conn_transfer3(conn *c, bool go_to_attacker, bool go_home)
+{
+
+if(c->state == conn_closed || c->state == conn_closing )
+return;
+LIBEVENT_THREAD *thread ;
+if (go_to_attacker)
+    thread= threads +power_stat.attacker;
+else    
+thread= threads+c->home;
+c->thread=  thread;
+    CQ_ITEM *item = cqi_new();
+    char buf[1];
+    if (item == NULL) {
+        /* Can't cleanly redispatch connection. close it forcefully. */
+        printf("error123**********************\n");
+        c->state = conn_closed;
+        close(c->sfd);
+        return;
+    }
+    
+    item->c = c;
+    item->init_state = conn_new_cmd; // showan: fixme do we need this
+    item->mode = queue_transfer;
+
+    cq_push(thread->new_conn_queue, item);
+
+    buf[0] = 'c';
+    if (write(thread->notify_send_fd, buf, 1) != 1) {
+        perror("Writing to thread notify pipe");
+    }
+}
+
+
+
 
 /****************************** LIBEVENT THREADS *****************************/
 

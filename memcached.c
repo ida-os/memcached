@@ -1114,38 +1114,7 @@ return;
 
 }
 */
-void conn_transfer3(conn *c, bool go_to_attacker, bool go_home)
-{
 
-if(c->state == conn_closed || c->state == conn_closing )
-return;
-LIBEVENT_THREAD *thread ;
-if (go_to_attacker)
-    thread= threads +power_stat.attacker;
-else    
-thread= threads+c->home;
-c->thread=  thread;
-    CQ_ITEM *item = cqi_new();
-    char buf[1];
-    if (item == NULL) {
-        /* Can't cleanly redispatch connection. close it forcefully. */
-        printf("error123**********************\n");
-        c->state = conn_closed;
-        close(c->sfd);
-        return;
-    }
-    
-    item->c = c;
-    item->init_state = conn_new_cmd; // showan: fixme do we need this
-    item->mode = queue_transfer;
-
-    cq_push(thread->new_conn_queue, item);
-
-    buf[0] = 'c';
-    if (write(thread->notify_send_fd, buf, 1) != 1) {
-        perror("Writing to thread notify pipe");
-    }
-}
 
 /*
 
@@ -6332,11 +6301,11 @@ the question is which connection- just randomly chooses one????*/
 
     //}
     
-    if(power_stat.ictim_worker == c->thread)
+    if(power_stat.victim_worker == c->thread)
     if (power_stat.load_balancing== true){
     
     c->is_guest = true;
-     conn_transfer(c, true, false);
+     conn_transfer3(c, true, false);
     }
 
     if(guests_should_go_home)
@@ -6344,8 +6313,8 @@ the question is which connection- just randomly chooses one????*/
       if(c->is_guest)
       {
        c->thread->number_of_guest --; // w know c->thread is not his/her home
-       c->thread->is_guest= false;
-       conn_transfer(c, flase, true);
+       c->is_guest= false;
+       conn_transfer(c, false, true);
 
       }
 

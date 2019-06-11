@@ -6267,7 +6267,7 @@ static void drive_machine(conn *c) {
             /*showan we need to reduce the load of the connection from its thread load */
             /* fixme: it seem that bye is never called*/
            // printf("bye******************************************************************************");
-            c->thread->load -= c->rate;
+            c->thread->load -= c->rate; // showan fixme
             c->thread->active_conn--; /* showan: reduce number of active connections when current connection is closed*/
             break;
 
@@ -6307,7 +6307,7 @@ the question is which connection- just randomly chooses one????*/
     
     if(c!=NULL)
     {
-    if(power_stat.victim_worker == c->thread->load)
+    if(power_stat.victim_worker == c->capcity)
     if (power_stat.load_balancing== true){
     
     c->is_guest = true;

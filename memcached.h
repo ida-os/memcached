@@ -468,6 +468,7 @@ double highets_capacity;
 bool load_balancing;
 };
 
+void event_handler(const int fd, const short which, void *arg);// showan, trnasfer this from memcached.c to make it acceible to thread.c
 
 #define ITEM_LINKED 1
 #define ITEM_CAS 2

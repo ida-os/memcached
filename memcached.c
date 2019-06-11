@@ -5937,7 +5937,7 @@ static void drive_machine(conn *c) {
                 }
                 stop = true;
             }
-            /*
+             
             c->num_ops_over_last_window ++; //  showan: connections is handling a new operation
             
             int curr_time= current_time;
@@ -5976,6 +5976,7 @@ static void drive_machine(conn *c) {
                printf("--------------\n");
                printf("rate is: %f \n", c->rate);
                printf("thread load is: %f \n", c->thread->load);
+               /*
                if(c->thread->load < power_stat.lowest_load)
                {
                    
@@ -5985,8 +5986,8 @@ static void drive_machine(conn *c) {
             printf("error in sending message to dispatcher");
 
                }
-
-                */
+               */
+               
                 /*balnce load    
                 if(pthread_mutex_trylock(&mutex_lb)==0)
                 {

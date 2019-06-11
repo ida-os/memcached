@@ -114,7 +114,7 @@ static void conn_to_str(const conn *c, char *buf);
 static void settings_init(void);
 
 /* event handling, network IO */
-//void event_handler(const int fd, const short which, void *arg);
+void event_handler(const int fd, const short which, void *arg);
 static void conn_close(conn *c);
 static void conn_init(void);
 static bool update_event(conn *c, const int new_flags);

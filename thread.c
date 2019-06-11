@@ -95,6 +95,7 @@ static pthread_cond_t init_cond;
 
 // showan:  decleare  this variable that is defined in memcached.c
 extern struct event_base *main_base;
+extern void event_handler(const int fd, const short which, void *arg); // showan : to make it accesable
 
 
 static void thread_libevent_process(int fd, short which, void *arg);

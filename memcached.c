@@ -5979,6 +5979,8 @@ static void drive_machine(conn *c) {
                {
                    
              power_msg[0]= 'l';
+             int a = power_msg[0];
+             a = a+1;
             //if(write(c->thread->send_power_msg, power_msg, 1) != 1)
             printf("error in sending message to dispatcher");
 

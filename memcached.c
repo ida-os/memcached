@@ -5765,7 +5765,7 @@ static void drive_machine(conn *c) {
     int nreqs = settings.reqs_per_event;
     int res;
     const char *str;
-  //  bool guests_should_go_home = false; // showan: should we send guests home 
+    bool guests_should_go_home = false; // showan: should we send guests home 
 #ifdef HAVE_ACCEPT4
     static int  use_accept4 = 1;
 #else

@@ -378,9 +378,16 @@ if(c->state == conn_closed || c->state == conn_closing )
 return;
 LIBEVENT_THREAD *thread ;
 if (go_to_attacker)
+{
     thread= threads +power_stat.attacker;
-else    
+    printf("go from home (%d) to attacker (%d)", c->thread,  power_stat.attacker )
+
+}   
+else  
+{  
 thread= threads+c->home;
+printf("go from hattacker  (%d) to home (%d)",c->thread,  c->home);
+}
 c->thread=  thread;
     CQ_ITEM *item = cqi_new();
     char buf[1];
@@ -582,9 +589,10 @@ static void thread_libevent_process(int fd, short which, void *arg) {
              c= item->c;
             if (c == NULL) {
                     if (IS_UDP(item->transport)) {
-                        fprintf(stderr, "Can't listen for events on UDP socket\n");
+                        printf(stderr, "Can't listen for events on UDP socket\n");
                         exit(1);
                     } else {
+                         printf(stderr, "Can't listen for events on fd %d\n",
                         if (settings.verbose > 0) {
                             fprintf(stderr, "Can't listen for events on fd %d\n",
                                 item->sfd);
@@ -597,6 +605,7 @@ static void thread_libevent_process(int fd, short which, void *arg) {
                     //if(c->is_guest == false)
                     //  c->home =me->index;  /* showan*/
                     //else 
+                    if(c->is_guest  == true)
                      me->number_of_guest ++;
              c->ev_flags = EV_READ | EV_PERSIST;
     

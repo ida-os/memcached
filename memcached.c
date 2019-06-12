@@ -5954,9 +5954,9 @@ static void drive_machine(conn *c) {
             //if(curr_time != c->last_sampling_time){ // showan //
                 //printf(" current timr %d\n ", curr_time - c->last_sampling_time  );
                 //printf(" ------------------------------------\n ");
-                printf(" current time:%d\n ", curr_time   );
-                printf("last_sampling_time:%d \n", c->last_sampling_time );
-                printf(" num operation %ld \n", c->num_ops_over_last_window );
+                ///printf(" current time:%d\n ", curr_time   );
+               /// printf("last_sampling_time:%d \n", c->last_sampling_time );
+               /// printf(" num operation %ld \n", c->num_ops_over_last_window );
                 int denom= (curr_time - c->last_sampling_time );
                 if (denom  <= 0 ) denom= 1; 
                //c->rate= c->num_ops_over_last_window/(curr_time - c->last_sampling_time ); //showan
@@ -5973,9 +5973,9 @@ static void drive_machine(conn *c) {
                c->thread->max_handled_load= c->thread->load;
                c->thread->capacity= c->thread->max_handled_load - c->thread->load;
                
-               printf("--------------\n");
-               printf("rate is: %f \n", c->rate);
-               printf("thread load is: %f \n", c->thread->load);
+               ///printf("--------------\n");
+               ///printf("rate is: %f \n", c->rate);
+               ///printf("thread load is: %f \n", c->thread->load);
                
                if(c->thread->load < power_stat.lowest_load)
                {
@@ -5988,7 +5988,7 @@ static void drive_machine(conn *c) {
                }
                
                
-                /*balnce load    
+                /*balnce loadd    
                 if(pthread_mutex_trylock(&mutex_lb)==0)
                 {
                     if(c->thread ==  thread_with_lowest_load)

@@ -5980,7 +5980,7 @@ static void drive_machine(conn *c) {
                if(c->thread->load < power_stat.lowest_load)
                {
                    
-             power_msg[0]= 'l';
+             power_msg[0]= 'f'; // fixme  f!
              
             if(write(c->thread->send_power_msg, power_msg, 1) != 1)
             printf("error in sending message to dispatcher");
@@ -6311,6 +6311,7 @@ the question is which connection- just randomly chooses one????*/
     if (power_stat.load_balancing== true){
     
     c->is_guest = true;
+    c->thread->active_conn --;
      conn_transfer3(c, true, false);
     }
 

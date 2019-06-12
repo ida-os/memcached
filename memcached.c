@@ -5973,6 +5973,10 @@ static void drive_machine(conn *c) {
                c->thread->max_handled_load= c->thread->load;
                c->thread->capacity= c->thread->max_handled_load - c->thread->load;
                
+               
+               printf("Thread (%d) load is: %f \n", c->thread->index,c->thread->load);
+               printf("Thread (%d) max_handled_load is: %f \n", c->thread->index,c->thread->max_handled_load);
+               printf("Thread (%d) capacity is: %f \n", c->thread->index,c->thread->capacity);
                ///printf("--------------\n");
                ///printf("rate is: %f \n", c->rate);
                ///printf("thread load is: %f \n", c->thread->load);
@@ -5980,7 +5984,17 @@ static void drive_machine(conn *c) {
                if(c->thread->load < power_stat.lowest_load)
                {
                    
-             power_msg[0]= 'f'; // fixme  f!
+             power_msg[0]= 'l'; 
+             
+            if(write(c->thread->send_power_msg, power_msg, 1) != 1)
+            printf("error in sending message to dispatcher");
+
+               }
+
+               if(c->thread->capacity > power_stat.highets_capacity)
+               {
+                   
+             power_msg[0]= 'c'; 
              
             if(write(c->thread->send_power_msg, power_msg, 1) != 1)
             printf("error in sending message to dispatcher");

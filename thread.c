@@ -589,10 +589,10 @@ static void thread_libevent_process(int fd, short which, void *arg) {
              c= item->c;
             if (c == NULL) {
                     if (IS_UDP(item->transport)) {
-                        printf(stderr, "Can't listen for events on UDP socket\n");
+                        fprintf(stderr, "Can't listen for events on UDP socket\n");
                         exit(1);
                     } else {
-                         printf(stderr, "Can't listen for events on fd %d\n",
+                         printf("Can't listen for events on fd \n");
                         if (settings.verbose > 0) {
                             fprintf(stderr, "Can't listen for events on fd %d\n",
                                 item->sfd);

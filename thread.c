@@ -331,7 +331,7 @@ double highets_capacity;
 bool load_balancing;
 }
 */
-struct power_saving power_stat = {1, 2, 0, 0,false};
+struct power_saving power_stat = {1, 2, 0, 0,true};
 // 
 static void power_saving_libevent(int fd, short which, void *arg) {
     LIBEVENT_THREAD *me = arg;

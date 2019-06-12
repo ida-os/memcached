@@ -380,13 +380,13 @@ LIBEVENT_THREAD *thread ;
 if (go_to_attacker)
 {
     thread= threads +power_stat.attacker;
-    printf("go from home (%d) to attacker (%d)", c->thread,  power_stat.attacker )
+    printf("go from home (%d) to attacker (%d)", c->thread->index,  power_stat.attacker );
 
 }   
 else  
 {  
 thread= threads+c->home;
-printf("go from hattacker  (%d) to home (%d)",c->thread,  c->home);
+printf("go from hattacker  (%d) to home (%d)",c->thread->index,  c->home);
 }
 c->thread=  thread;
     CQ_ITEM *item = cqi_new();

@@ -389,7 +389,7 @@ static void power_saving_libevent(int fd, short which, void *arg) {
          {
               power_stat.highets_capacity = me->capacity;
               power_stat.attacker= me->index;
-               printf("the attacker thread is %d and the load is %f \n", me->index, me->load);
+               printf("the attacker thread is %d and the capacity is %f \n", me->index, me->capacity);
 
          }
          break;

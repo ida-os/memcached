@@ -334,7 +334,7 @@ bool victim_update;
 rel_time_t last_laod_balancing;
 }
 */
-struct power_saving power_stat = {1, 2, 0, 0,false, true, 0};
+struct power_saving power_stat = {-1, -1, 99999999, 0,false, true, 0};
 // 
 
 
@@ -389,6 +389,7 @@ static void power_saving_libevent(int fd, short which, void *arg) {
          {
               power_stat.highets_capacity = me->capacity;
               power_stat.attacker= me->index;
+               printf("the attacker thread is %d and the load is %f \n", me->index, me->load);
 
          }
          break;

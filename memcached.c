@@ -6814,7 +6814,10 @@ static void clock_handler(const int fd, const short which, void *arg) {
 
        // showan : we call load balncing here. I dont know if it is right thing to do
        if (current_time - power_stat.last_laod_balancing > 1000 ) // fixme 1000ms is pramater that should be fixed as soon as possible
+          {
           load_balncing();
+          power_stat.last_laod_balancing = current_time;
+          }
         return;
     }
 #endif

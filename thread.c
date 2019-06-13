@@ -343,10 +343,11 @@ struct power_saving power_stat = {1, 2, 0, 0,false, true, current_time};
 if (power_stat.load_balancing ==false)
 {
     int total_capacity= 0;
-    for(int i=0; i< nthreads; i++) // fixme o(n)
+    for(int i=0; i< settings.num_threads; i++) // fixme o(n)
          total_capacity+= threads[i].capcity;
-    if(threads[power_stat.victim_worker].load < (total_capacity - power_stat.victim_worker].capcity ))
+    if(threads[power_stat.victim_worker].load < (total_capacity - threads[power_stat.victim_worker].capcity ))
     {
+
        power_stat.victim_update= false; // vitim is  no longer updated
        power_stat.load_balancing = true;
        

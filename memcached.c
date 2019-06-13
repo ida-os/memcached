@@ -130,7 +130,9 @@ static void write_bin_error(conn *c, protocol_binary_response_status err,
 static void write_bin_miss_response(conn *c, char *key, size_t nkey);
 extern  LIBEVENT_THREAD *threads; //showan
 extern struct power_saving power_stat; //showan
+extern void load_balncing();
 void conn_doneate(conn *c); // showan
+
 
 #ifdef EXTSTORE
 static void _get_extstore_cb(void *e, obj_io *io, int ret);
@@ -5981,7 +5983,7 @@ static void drive_machine(conn *c) {
                ///printf("rate is: %f \n", c->rate);
                ///printf("thread load is: %f \n", c->thread->load);
                
-               if(c->thread->load < power_stat.lowest_load)
+               if((c->thread->load < power_stat.lowest_load ) && power_stat.victim_update == true )
                {
                    
              power_msg[0]= 'l'; 
@@ -6325,6 +6327,9 @@ the question is which connection- just randomly chooses one????*/
     if (power_stat.load_balancing== true){
     c->is_guest = true;
     c->thread->active_conn --;
+    if(c->thread->active_conn == 0)
+    c->thred.w_state= cold;
+    
      conn_transfer3(c, true, false);
     }
 
@@ -6758,7 +6763,7 @@ static struct event clockevent;
  * ensure their clocks are correct before starting memcached. */
 static void clock_handler(const int fd, const short which, void *arg) {
     //struct timeval t = {.tv_sec = 1, .tv_usec = 0}; // tshowan
-    struct timeval t = {.tv_sec = 0, .tv_usec = 1000};
+    struct timeval t = {.tv_sec = 0, .tv_usec = 1000}; // showan: call this function every 1ms
     //
     static bool initialized = false;
 #if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_MONOTONIC)
@@ -6806,6 +6811,10 @@ static void clock_handler(const int fd, const short which, void *arg) {
         //current_time = (rel_time_t) (ts.tv_sec - monotonic_start); tshowan
         current_time = (rel_time_t) ((((ts.tv_sec - monotonic_start) * 1000000000) + ts.tv_nsec)/ 1000000); //tshowan
        // printf("main timer:----------: %d \n", current_time); //tshowan
+
+       // showan : we call load balncing here. I dont know if it is right thing to do
+       if (current_time - power_stat.last_laod_balancing > 1000 ) // fixme 1000ms is pramater that should be fixed as soon as possible
+          load_balncing();
         return;
     }
 #endif

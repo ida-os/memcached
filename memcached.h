@@ -466,6 +466,8 @@ int attacker;
 double lowest_load;
 double highets_capacity;
 bool load_balancing;
+bool victim_update; // showan: is it allowed to update victim
+rel_time_t last_laod_balancing;
 };
 
 

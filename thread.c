@@ -329,10 +329,36 @@ int attacker;
 double lowest_load;
 double highets_capacity;
 bool load_balancing;
+bool victim_update;
+rel_time_t last_laod_balancing;
 }
 */
-struct power_saving power_stat = {1, 2, 0, 0,false};
+struct power_saving power_stat = {1, 2, 0, 0,false, true, current_time};
 // 
+
+
+
+ void load_balncing() // we call this function at aeach load balncing period
+{
+if (power_stat.load_balancing ==false)
+{
+    int total_capacity= 0;
+    for(int i=0; i< nthreads; i++) // fixme o(n)
+         total_capacity+= threads[i].capcity;
+    if(threads[power_stat.victim_worker].load < (total_capacity - power_stat.victim_worker].capcity ))
+    {
+       power_stat.victim_update= false; // vitim is  no longer updated
+       power_stat.load_balancing = true;
+       
+
+    }
+
+}
+
+
+
+}
+
 static void power_saving_libevent(int fd, short which, void *arg) {
     LIBEVENT_THREAD *me = arg;
     char buf[1];
@@ -1094,6 +1120,7 @@ void memcached_thread_init(int nthreads, void *arg) {
         threads[i].max_handled_load=0;
         threads[i].index=i;
         threads[i].number_of_guest =0;
+        threads[i].w_state= normal;
 
         
        

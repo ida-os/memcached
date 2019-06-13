@@ -333,7 +333,7 @@ bool victim_update;
 rel_time_t last_laod_balancing;
 }
 */
-struct power_saving power_stat = {1, 2, 0, 0,false, true, current_time};
+struct power_saving power_stat = {1, 2, 0, 0,false, true, 0};
 // 
 
 

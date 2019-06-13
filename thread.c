@@ -92,6 +92,7 @@ unsigned int item_lock_hashpower;
 static int init_count = 0;
 static pthread_mutex_t init_lock;
 static pthread_cond_t init_cond;
+ void load_balncing(); //showan:
 
 // showan:  decleare  this variable that is defined in memcached.c
 extern struct event_base *main_base;
@@ -344,8 +345,8 @@ if (power_stat.load_balancing ==false)
 {
     int total_capacity= 0;
     for(int i=0; i< settings.num_threads; i++) // fixme o(n)
-         total_capacity+= threads[i].capcity;
-    if(threads[power_stat.victim_worker].load < (total_capacity - threads[power_stat.victim_worker].capcity ))
+         total_capacity+= threads[i].capacity;
+    if(threads[power_stat.victim_worker].load < (total_capacity - threads[power_stat.victim_worker].capacity ))
     {
 
        power_stat.victim_update= false; // vitim is  no longer updated

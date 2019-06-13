@@ -470,7 +470,7 @@ static void thread_libevent_process(int fd, short which, void *arg) {
     switch (buf[0]) {
     case 'c':
         item = cq_pop(me->new_conn_queue);
-        fprintf(stderr, "thread %d received c\n", me->eid);
+        //fprintf(stderr, "thread %d received c\n", me->eid);
         if (NULL == item) {
             break;
         }
@@ -531,8 +531,8 @@ static void thread_libevent_process(int fd, short which, void *arg) {
 static int last_thread = 0;
 
 // =e
-static int conn_counter = 0;
-static int reference_pointer = 0;
+// static int conn_counter = 0;
+// static int reference_pointer = 0;
 //
 
 /*
@@ -551,28 +551,28 @@ void dispatch_conn_new(int sfd, enum conn_states init_state, int event_flags,
         return ;
     }
     // =e
-    conn_counter++;
-    int i, tid = 0;
+    // conn_counter++;
+    // int i, tid = 0;
 
-    if(conn_counter > 10) {
-        for(i=1; i < settings.num_threads; i++) {
-            if(!threads[i].active){
-                threads[i].active = true;
-                tid = i;
-            }
-        }
-        if(tid == 0) {
-            tid = reference_pointer++;
-            reference_pointer %= settings.num_threads;
-        }
-        conn_counter = 0;
-    }
-    else {
-        tid = last_thread;
-    }
+    // if(conn_counter > 10) {
+    //     for(i=1; i < settings.num_threads; i++) {
+    //         if(!threads[i].active){
+    //             threads[i].active = true;
+    //             tid = i;
+    //         }
+    //     }
+    //     if(tid == 0) {
+    //         tid = reference_pointer++;
+    //         reference_pointer %= settings.num_threads;
+    //     }
+    //     conn_counter = 0;
+    // }
+    // else {
+    //     tid = last_thread;
+    // }
 
-    fprintf(stderr, "Selecting thread %d for connection \n", tid);
-    //int tid = (last_thread + 1) % settings.num_threads;
+    // fprintf(stderr, "Selecting thread %d for connection \n", tid);
+    int tid = (last_thread + 2) % settings.num_threads;
 
     LIBEVENT_THREAD *thread = threads + tid;
     //

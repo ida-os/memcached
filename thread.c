@@ -389,7 +389,7 @@ static void power_saving_libevent(int fd, short which, void *arg) {
         }
     break;
     case 'c' : // capacity
-         if (me->capacity > power_stat.highets_capacity  || me->index == power_stat.attacker )
+         if ((me->capacity > power_stat.highets_capacity  || me->index == power_stat.attacker) && me->index != power_stat.victim_worker)
          {
               power_stat.highets_capacity = me->capacity;
               power_stat.attacker= me->index;

@@ -92,7 +92,7 @@ unsigned int item_lock_hashpower;
 static int init_count = 0;
 static pthread_mutex_t init_lock;
 static pthread_cond_t init_cond;
-void load_balncing(); //showan:
+void load_balncing(void); //showan:
 
 // showan:  decleare  this variable that is defined in memcached.c
 extern struct event_base *main_base;

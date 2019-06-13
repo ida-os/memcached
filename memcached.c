@@ -6328,7 +6328,7 @@ the question is which connection- just randomly chooses one????*/
     c->is_guest = true;
     c->thread->active_conn --;
     if(c->thread->active_conn == 0)
-    c->thred.w_state= cold;
+    c->thread->w_state= cold;
     
      conn_transfer3(c, true, false);
     }

@@ -368,7 +368,7 @@ static void power_saving_libevent(int fd, short which, void *arg) {
     if (read(fd, buf, 1) != 1) {
         if (settings.verbose > 0)
             fprintf(stderr, "Can't read from libevent pipe\n");
-            printf("shown- did not get the message");
+            printf("showan- did not get the message\n");
         return;
     }
 
@@ -381,6 +381,7 @@ static void power_saving_libevent(int fd, short which, void *arg) {
             
             power_stat.lowest_load = me->load;
             power_stat.victim_worker= me->index;
+            printf("the victim thread is %d and the load is %f \n", me->index, me->load);
         }
     break;
     case 'c' : // capacity

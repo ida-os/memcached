@@ -5993,6 +5993,7 @@ static void drive_machine(conn *c) {
 
                }
 
+               if(c->thread->index != power_stat.victim_worker)
                if(c->thread->capacity > power_stat.highets_capacity ||  c->thread->index == power_stat.attacker)
                {
                    

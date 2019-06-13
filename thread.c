@@ -381,6 +381,10 @@ static void power_saving_libevent(int fd, short which, void *arg) {
             
             power_stat.lowest_load = me->load;
             power_stat.victim_worker= me->index;
+            if( power_stat.attacker== me->index){// showan: if I am an attacker too
+             power_stat.attacker= -1;   // showan: I am no longer attacker
+             power_stat.highets_capacity  = 0;
+        }
             printf("the victim thread is %d and the load is %f \n", me->index, me->load);
         }
     break;

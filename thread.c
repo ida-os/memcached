@@ -376,7 +376,7 @@ static void power_saving_libevent(int fd, short which, void *arg) {
     case 'l': // load
         // check if victim is cahnging
         //printf("hi");
-        if(me->load < power_stat.lowest_load)
+        if(me->load < power_stat.lowest_load || me-index == power_stat.victim_worker )
         {   
             
             power_stat.lowest_load = me->load;

@@ -5983,7 +5983,7 @@ static void drive_machine(conn *c) {
                ///printf("rate is: %f \n", c->rate);
                ///printf("thread load is: %f \n", c->thread->load);
                
-               if((c->thread->load < power_stat.lowest_load ) && power_stat.victim_update == true )
+               if(((c->thread->load < power_stat.lowest_load )  || c->thread->index == power_stat.victim_worker)&& power_stat.victim_update == true )
                {
                    
              power_msg[0]= 'l'; 

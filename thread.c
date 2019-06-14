@@ -341,6 +341,7 @@ struct power_saving power_stat = {-1, -1, 99999999, 0,false, true, 0};
 
  void load_balncing() // we call this function at aeach load balncing period
 {
+ if(power_stat->victim_worker != power_stat->attacker )   
 if (power_stat.load_balancing ==false)
 {
     int total_capacity= 0;

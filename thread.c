@@ -386,7 +386,7 @@ static void power_saving_libevent(int fd, short which, void *arg) {
              power_stat.attacker= -1;   // showan: I am no longer attacker
              power_stat.highets_capacity  = 0;
         }
-            printf("the victim thread is %d and the load is %f \n", me->index, me->load);
+            //printf("the victim thread is %d and the load is %f \n", me->index, me->load);
         }
     break;
     case 'c' : // capacity
@@ -394,7 +394,7 @@ static void power_saving_libevent(int fd, short which, void *arg) {
          {
               power_stat.highets_capacity = me->capacity;
               power_stat.attacker= me->index;
-              printf("the attacker thread is %d and the capacity is %f \n", me->index, me->capacity);
+             // printf("the attacker thread is %d and the capacity is %f \n", me->index, me->capacity);
 
          }
          break;

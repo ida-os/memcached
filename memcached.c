@@ -6324,7 +6324,7 @@ the question is which connection- just randomly chooses one????*/
     
     if(c->thread!=NULL)
     {
-    if( (power_stat.victim_worker == c->thread->index) && (ppower_stat.attacker!= -1)  && (power_stat.victim_worker != power_stat.attacker  ))
+    if( (power_stat.victim_worker == c->thread->index) && (power_stat.attacker!= -1)  && (power_stat.victim_worker != power_stat.attacker  ))
     if (power_stat.load_balancing== true){
     c->is_guest = true;
     c->thread->active_conn --;

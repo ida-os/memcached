@@ -5975,7 +5975,7 @@ static void drive_machine(conn *c) {
                c->thread->max_handled_load= c->thread->load;
                c->thread->capacity= c->thread->max_handled_load - c->thread->load;
                
-               printf("max handled load thread (%d) --> %f \n", c->thread->index ,c->thread->max_handled_load);
+               printf("%f \n", c->thread->load);
                ////printf("Thread (%d) load is: %f \n", c->thread->index,c->thread->load);
               //// printf("Thread (%d) max_handled_load is: %f \n", c->thread->index,c->thread->max_handled_load);
               //// printf("Thread (%d) capacity is: %f \n", c->thread->index,c->thread->capacity);

@@ -5975,7 +5975,7 @@ static void drive_machine(conn *c) {
                c->thread->max_handled_load= c->thread->load;
                c->thread->capacity= c->thread->max_handled_load - c->thread->load;
                
-               
+               printf("max handled load thread (%d) --> %f \n", c->thread->index ,c->thread->max_handled_load);
                ////printf("Thread (%d) load is: %f \n", c->thread->index,c->thread->load);
               //// printf("Thread (%d) max_handled_load is: %f \n", c->thread->index,c->thread->max_handled_load);
               //// printf("Thread (%d) capacity is: %f \n", c->thread->index,c->thread->capacity);
@@ -5994,7 +5994,7 @@ static void drive_machine(conn *c) {
                }
 
                if(c->thread->index != power_stat.victim_worker)
-               if(c->thread->capacity > power_stat.highets_capacity ||  c->thread->index == power_stat.attacker)
+               if((c->thread->capacity > power_stat.highets_capacity )||  (c->thread->index == power_stat.attacker))
                {
                    
              power_msg[0]= 'c'; 

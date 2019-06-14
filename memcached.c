@@ -6331,7 +6331,7 @@ the question is which connection- just randomly chooses one????*/
     if(c->thread->active_conn == 0)
     {
     c->thread->w_state= cold;
-    power_stat->power_stat.load_balancing= false;
+    power_stat.load_balancing= false;
     power_stat.victim_update= true;
     }
     
@@ -6820,7 +6820,7 @@ static void clock_handler(const int fd, const short which, void *arg) {
        // showan : we call load balncing here. I dont know if it is right thing to do
        if (current_time - power_stat.last_laod_balancing > 10000 ) // fixme 1000ms is pramater that should be fixed as soon as possible
           {
-          load_balncing(); fixme uncomment to turn on load balncing
+          load_balncing(); //fixme uncomment to turn on load balncing
           power_stat.last_laod_balancing = current_time;
           }
         return;

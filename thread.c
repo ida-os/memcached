@@ -653,7 +653,7 @@ static void thread_libevent_process(int fd, short which, void *arg) {
                
 
             event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
-            if (event_base_set(c->thread->base, &c->event)==-1)
+            event_base_set(c->thread->base, &c->event)
             if (event_add(&c->event, 0) == -1) {
             perror("event_add");
      }

@@ -625,10 +625,12 @@ typedef struct {
     as a flag to let the conections know that their rate is  not reflected on threads load*/
     long last_time_active; /* fixme : it shows the last thread was active processing a command- should it be time type? */
     int index;
+    bool accept_guest; // this shows if the worker can accept guest or not. It intially is set to true
     struct event power_mng_event;  /* listen event for notify pipe */
     int send_power_msg;
     int reciv_power_msg;
     long number_of_guest;
+    long number_of_guest_not_onload;
  
 
 #ifdef EXTSTORE

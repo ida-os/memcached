@@ -636,12 +636,17 @@ static void thread_libevent_process(int fd, short which, void *arg) {
                     }
                 } else {
                     c->thread = me;
+                    c->on_load= false; // showan: should we do this?
                     me->active_conn++; /* showan: increase the connecton number of thread by one*/
                     //if(c->is_guest == false)
                     //  c->home =me->index;  /* showan*/
                     //else 
                     if(c->is_guest  == true)
+                    {
                      me->number_of_guest ++;
+                     me->number_of_guest_not_onload ++;
+                     me->accept_guest = false; // I cannot accept guest connections anymore because this guest is not on load an therefore the thread capacity is not correct
+                    }
              c->ev_flags = EV_READ | EV_PERSIST;
     
             if (event_del(&c->event) == -1)  perror("event_del");
@@ -1130,6 +1135,8 @@ void memcached_thread_init(int nthreads, void *arg) {
         threads[i].index=i;
         threads[i].number_of_guest =0;
         threads[i].w_state= normal;
+        threads[i].accept_guest = true;
+        threads[i].number_of_guest_not_onload=0;
 
         
        

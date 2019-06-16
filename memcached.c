@@ -741,6 +741,7 @@ conn *conn_new(const int sfd, enum conn_states init_state,
     c->highest_rate=0;
     c->home=-1; // fixme is it right
     c->is_guest=false;
+    
 
 
     event_set(&c->event, sfd, event_flags, event_handler, (void *)c);
@@ -5965,7 +5966,16 @@ static void drive_machine(conn *c) {
                 if(c->on_load)
                 c->thread->load-= c->rate;
                 else
+                {
                 c->on_load=true; // I do this here beause I want to excute this instrution only one time 
+                if(c->is_guest)
+                {
+                c->thread->number_of_guest_not_onload --; 
+                if (c->thread->number_of_guest_not_onload < 1)
+                c->thread->accept_guest= true;
+
+                }
+                }
 
                c->rate= (c->num_ops_over_last_window + (denom-1))/ denom; 
                c->num_ops_over_last_window = 0;  // showan 
@@ -6322,7 +6332,7 @@ the question is which connection- just randomly chooses one????*/
 //
     //}
     
-    if(c->thread!=NULL)
+    if(c->thread!=NULL && c->state== conn_new_cmd)
     {
     if( (power_stat.victim_worker == c->thread->index) && (power_stat.attacker!= -1)  && (power_stat.victim_worker != power_stat.attacker  ))
     if (power_stat.load_balancing== true){

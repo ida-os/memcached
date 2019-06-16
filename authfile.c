@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 #include "authfile.h"
-
+//
 // TODO: frontend needs a refactor so this can avoid global objects.
 
 #define MAX_ENTRY_LEN 256

@@ -12,9 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
-// =e
-#include <sched.h>
-//
 
 #ifdef __sun
 #include <atomic.h>
@@ -30,8 +27,9 @@
 enum conn_queue_item_modes {
     queue_new_conn,   /* brand new connection. */
     queue_redispatch, /* redispatching from side thread */
-    queue_donate        // =e  donating connection to another thread
+    queue_transfer  /*showan: whan we  tranfer a coonection*/
 };
+
 typedef struct conn_queue_item CQ_ITEM;
 struct conn_queue_item {
     int               sfd;
@@ -48,7 +46,7 @@ struct conn_queue_item {
 /* A connection queue. */
 typedef struct conn_queue CQ;
 struct conn_queue {
-    CQ_ITEM *head;
+    CQ_ITEM *head; 
     CQ_ITEM *tail;
     pthread_mutex_t lock;
 };
@@ -84,7 +82,8 @@ unsigned int item_lock_hashpower;
  * Each libevent instance has a wakeup pipe, which other threads
  * can use to signal that they've put a new connection on its queue.
  */
-static LIBEVENT_THREAD *threads;
+ //static 
+ LIBEVENT_THREAD *threads; // showan: I removed static because I want use this variale outside this file
 
 /*
  * Number of worker threads that have finished setting themselves up.
@@ -92,6 +91,11 @@ static LIBEVENT_THREAD *threads;
 static int init_count = 0;
 static pthread_mutex_t init_lock;
 static pthread_cond_t init_cond;
+void load_balncing(void); //showan:
+
+// showan:  decleare  this variable that is defined in memcached.c
+extern struct event_base *main_base;
+extern void event_handler(const int fd, const short which, void *arg); // showan : to make it accesable
 
 
 static void thread_libevent_process(int fd, short which, void *arg);
@@ -299,42 +303,6 @@ static void create_worker(void *(*func)(void *), void *arg) {
 
     pthread_attr_init(&attr);
 
-    // =e affine threads
-    if (settings.thread_affinity) {
-        const int offset = settings.thread_affinity_offset;
-        static int current_cpu = -1;
-
-        static int max_cpus = 8 * sizeof(cpu_set_t);
-        cpu_set_t m;
-        int i = 0;
-
-        CPU_ZERO(&m);
-        sched_getaffinity(0, sizeof(cpu_set_t), &m);
-        int id = ((LIBEVENT_THREAD*)arg)->eid;
-        for (i = 0; i < max_cpus; i++) {
-            int c = (current_cpu + i + 1) % (max_cpus);
-            if(c < offset)
-                c+=offset;
-            if (CPU_ISSET(c, &m)) {
-                CPU_ZERO(&m);
-                CPU_SET(c, &m);
-
-                if ((ret = pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &m)) != 0) {
-                    fprintf(stderr, "Can't set thread affinity: %s\n",
-                            strerror(ret));
-                    exit(1);
-                }
-
-                if (settings.verbose > 0)
-                    fprintf(stderr, "setting thread %d to cpu %d\n",id , c);
-
-                 current_cpu = c;
-                break;
-            }
-        }
-    }
-    //
-
     if ((ret = pthread_create(&((LIBEVENT_THREAD*)arg)->thread_id, &attr, func, arg)) != 0) {
         fprintf(stderr, "Can't create thread: %s\n",
                 strerror(ret));
@@ -350,12 +318,142 @@ void accept_new_conns(const bool do_accept) {
     do_accept_new_conns(do_accept);
     pthread_mutex_unlock(&conn_lock);
 }
+
+/******************************POWER MANAGMENT *********************************/
+// showan: powoer saving approch
+/*
+struct power_saving
+{
+int victim_worker;
+int attacker;
+double lowest_load;
+double highets_capacity;
+bool load_balancing;
+bool victim_update;
+rel_time_t last_laod_balancing;
+}
+*/
+struct power_saving power_stat = {-1, -1, 99999999, 0,false, true, 0};
+// 
+
+
+
+ void load_balncing() // we call this function at aeach load balncing period
+{
+ if(power_stat.victim_worker != power_stat.attacker  )   
+if (power_stat.load_balancing ==false)
+{
+    int total_capacity= 0;
+    for(int i=0; i< settings.num_threads; i++) // fixme o(n)
+         total_capacity+= threads[i].capacity;
+    if(threads[power_stat.victim_worker].load < (total_capacity - threads[power_stat.victim_worker].capacity ))
+    {
+
+       power_stat.victim_update= false; // vitim is  no longer updated
+       power_stat.load_balancing = true;
+       
+
+    }
+
+}
+
+
+
+}
+
+static void power_saving_libevent(int fd, short which, void *arg) {
+    LIBEVENT_THREAD *me = arg;
+    char buf[1];
+
+    if (read(fd, buf, 1) != 1) {
+        if (settings.verbose > 0)
+            fprintf(stderr, "Can't read from libevent pipe\n");
+        printf("showan- did not get the message\n");
+        return;
+    }
+
+    switch (buf[0]) {
+    case 'l': // load
+        // check if victim is cahnging
+        //printf("hi");
+        if(me->load < power_stat.lowest_load || me->index == power_stat.victim_worker )
+        {   
+            
+            power_stat.lowest_load = me->load;
+            power_stat.victim_worker= me->index;
+            if( power_stat.attacker== me->index){// showan: if I am an attacker too
+             power_stat.attacker= -1;   // showan: I am no longer attacker
+             power_stat.highets_capacity  = 0;
+        }
+            //printf("the victim thread is %d and the load is %f \n", me->index, me->load);
+        }
+    break;
+    case 'c' : // capacity
+         if ((me->capacity > power_stat.highets_capacity  || me->index == power_stat.attacker) && me->index != power_stat.victim_worker)
+         {
+              power_stat.highets_capacity = me->capacity;
+              power_stat.attacker= me->index;
+             // printf("the attacker thread is %d and the capacity is %f \n", me->index, me->capacity);
+
+         }
+         break;
+    }
+    
+        
+}
+
+
+
+
+void conn_transfer3(conn *c, bool go_to_attacker, bool go_home)
+{
+
+if(c->state == conn_closed || c->state == conn_closing )
+return;
+LIBEVENT_THREAD *thread ;
+if (go_to_attacker)
+{
+    thread= threads +power_stat.attacker;
+    printf("(%d)[%d] go from home (%d) to attacker (%d) active conn %ld - %ld\n", c->sfd, c->state, c->thread->index,  power_stat.attacker, c->thread->active_conn, thread->active_conn );
+
+}   
+else  
+{  
+thread= threads+c->home;
+printf("(%d)[%d] go from hattacker  (%d) to home (%d) \n", c->sfd, c->state, c->thread->index,  c->home);
+}
+c->thread=  thread;
+    CQ_ITEM *item = cqi_new();
+    char buf[1];
+    if (item == NULL) {
+        /* Can't cleanly redispatch connection. close it forcefully. */
+        printf("error123**********************\n");
+        c->state = conn_closed;
+        close(c->sfd);
+        return;
+    }
+    
+    item->c = c;
+    item->init_state = conn_new_cmd; // showan: fixme do we need this
+    item->mode = queue_transfer;
+
+    cq_push(thread->new_conn_queue, item);
+
+    buf[0] = 'c';
+    if (write(thread->notify_send_fd, buf, 1) != 1) {
+        perror("Writing to thread notify pipe");
+    }
+}
+
+
+
+
 /****************************** LIBEVENT THREADS *****************************/
 
 /*
  * Set up a thread's information.
  */
-static void setup_thread(LIBEVENT_THREAD *me, int id) {
+static void setup_thread(LIBEVENT_THREAD *me) {
 #if defined(LIBEVENT_VERSION_NUMBER) && LIBEVENT_VERSION_NUMBER >= 0x02000101
     struct event_config *ev_config;
     ev_config = event_config_new();
@@ -376,10 +474,29 @@ static void setup_thread(LIBEVENT_THREAD *me, int id) {
               EV_READ | EV_PERSIST, thread_libevent_process, me);
     event_base_set(me->base, &me->notify_event);
 
+
+
     if (event_add(&me->notify_event, 0) == -1) {
         fprintf(stderr, "Can't monitor libevent notify pipe\n");
         exit(1);
     }
+
+ // showan: create a communication channel between threads and power mangment
+
+
+ /* Listen for notifications from other threads */
+    event_set(&me->power_mng_event, me->reciv_power_msg,
+              EV_READ | EV_PERSIST, power_saving_libevent, me);
+    event_base_set(main_base, &me->power_mng_event);
+
+
+
+    if (event_add(&me->power_mng_event, 0) == -1) {
+        fprintf(stderr, "Can't monitor libevent notify pipe\n");
+        exit(1);
+    }
+ 
+
 
     me->new_conn_queue = malloc(sizeof(struct conn_queue));
     if (me->new_conn_queue == NULL) {
@@ -415,11 +532,6 @@ static void setup_thread(LIBEVENT_THREAD *me, int id) {
         }
     }
 #endif
-    // =e
-    me->connections = 0;
-    me->eid = id;
-    me->active = false;
-    me->mother = false;
 }
 
 /*
@@ -470,7 +582,6 @@ static void thread_libevent_process(int fd, short which, void *arg) {
     switch (buf[0]) {
     case 'c':
         item = cq_pop(me->new_conn_queue);
-        //fprintf(stderr, "thread %d received c\n", me->eid);
         if (NULL == item) {
             break;
         }
@@ -491,8 +602,14 @@ static void thread_libevent_process(int fd, short which, void *arg) {
                         close(item->sfd);
                     }
                 } else {
+                   
                     c->thread = me;
-                    me->connections++;
+                    me->active_conn++; /* showan: increase the connecton number of thread by one*/
+                    printf("(%d) incrementing %d to %ld in new conn\n", c->sfd, c->thread->index, c->thread->active_conn);  // =e
+                    //if(c->is_guest == false)
+                      c->home =me->index;  /* showan*/
+                    //else 
+                     //me->number_of_guest ++;
 #ifdef TLS
                     if (settings.ssl_enabled && c->ssl != NULL) {
                         assert(c->thread && c->thread->ssl_wbuf);
@@ -501,16 +618,75 @@ static void thread_libevent_process(int fd, short which, void *arg) {
 #endif
                 }
                 break;
+            case queue_transfer: //showan
+
+             c= item->c;
+            if (c == NULL) {
+                    if (IS_UDP(item->transport)) {
+                        fprintf(stderr, "Can't listen for events on UDP socket\n");
+                        exit(1);
+                    } else {
+                         printf("Can't listen for events on fd \n");
+                        if (settings.verbose > 0) {
+                            fprintf(stderr, "Can't listen for events on fd %d\n",
+                                item->sfd);
+                        }
+                        close(item->sfd);
+                    }
+                } else {
+                    c->thread = me;
+                    me->active_conn++; /* showan: increase the connecton number of thread by one*/
+                    printf("(%d) incrementing %d to %ld in transfer\n", c->sfd, c->thread->index, c->thread->active_conn);  // =e
+                    //if(c->is_guest == false)
+                    //  c->home =me->index;  /* showan*/
+                    //else 
+                    if(c->is_guest  == true)
+                     me->number_of_guest ++;
+             c->ev_flags = EV_READ | EV_PERSIST;
+    
+            if (event_del(&c->event) == -1)  perror("event_del");
+               
+
+            event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
+            if (event_base_set(c->thread->base, &c->event)==-1)
+            if (event_add(&c->event, 0) == -1) {
+            perror("event_add");
+     }
+    }
+
+            break;    
 
             case queue_redispatch:
                 conn_worker_readd(item->c);
                 break;
-            case queue_donate:
-                reinitialize_events(item->c);
-                break;
         }
         cqi_free(item);
         break;
+
+
+
+    /*showan:
+    case 'z':
+    me->load=0;
+    me->round++;
+    me->last_time_active= current_time;
+    if(pthread_mutex_trylock(&mutex_lb)==0)// Maybe it never can get this lock. if so what heppen- fixme
+    {
+      
+        if(me->load < lowest_load)
+        {
+            thread_with_lowest_load = me;
+            lowest_load=  me->load; // fixme, I think we should comapre avgload not instant load
+        }
+         pthread_mutex_unlock(&mutex_lb);
+
+    }
+    //load_balncer
+    
+
+
+    break;  
+    */  
     /* we were told to pause and report in */
     case 'p':
         register_thread_initialized();
@@ -528,12 +704,41 @@ static void thread_libevent_process(int fd, short which, void *arg) {
 }
 
 /* Which thread we assigned a connection to most recently. */
-static int last_thread = 0;
+static int last_thread = -1;
 
-// =e
-// static int conn_counter = 0;
-// static int reference_pointer = 0;
-//
+
+/*showan
+*/
+int choose_next_worker()
+{
+
+int tid = (last_thread + 1) % settings.num_threads;
+//LIBEVENT_THREAD *thread = threads + tid;
+last_thread = tid;
+/*int last_thread_t = tid;
+
+nt tid_t;
+
+for (int i =0; i < settings.num_threads; i++ ){
+   tid_t = (last_thread_t++) % settings.num_threads;
+   LIBEVENT_THREAD *thread_t = threads + tid_t;
+   if(!(thread_t->active) || thread_t->am_i_a_dispatching)
+   continue; 
+   if(!thread->active ){
+   thread= thread_t;
+   tid=tid_t;
+   last_thread = tid;
+   } else {
+   if(thread_t->active_conn < thread->active_conn  ){// fixme : load is not connections
+   thread= thread_t;
+   tid=tid_t;
+   last_thread = tid;
+   }
+   }
+}
+*/
+return tid;
+}
 
 /*
  * Dispatches a new connection to another thread. This is only ever called
@@ -541,7 +746,7 @@ static int last_thread = 0;
  * of an incoming connection.
  */
 void dispatch_conn_new(int sfd, enum conn_states init_state, int event_flags,
-                       int read_buffer_size, enum network_transport transport, void *ssl, uint64_t conns) {
+                       int read_buffer_size, enum network_transport transport, void *ssl) {
     CQ_ITEM *item = cqi_new();
     char buf[1];
     if (item == NULL) {
@@ -550,32 +755,14 @@ void dispatch_conn_new(int sfd, enum conn_states init_state, int event_flags,
         fprintf(stderr, "Failed to allocate memory for connection object\n");
         return ;
     }
-    // =e
-    // conn_counter++;
-    // int i, tid = 0;
 
-    // if(conn_counter > 10) {
-    //     for(i=1; i < settings.num_threads; i++) {
-    //         if(!threads[i].active){
-    //             threads[i].active = true;
-    //             tid = i;
-    //         }
-    //     }
-    //     if(tid == 0) {
-    //         tid = reference_pointer++;
-    //         reference_pointer %= settings.num_threads;
-    //     }
-    //     conn_counter = 0;
-    // }
-    // else {
-    //     tid = last_thread;
-    // }
+    int tid = (last_thread + 1) % settings.num_threads; // showant
+    //int tid= 1; 
+     //int  tid = choose_next_worker(); /* showan: */
 
-    // fprintf(stderr, "Selecting thread %d for connection \n", tid);
-    int tid = (last_thread + 2) % settings.num_threads;
+
 
     LIBEVENT_THREAD *thread = threads + tid;
-    //
 
     last_thread = tid;
 
@@ -588,50 +775,13 @@ void dispatch_conn_new(int sfd, enum conn_states init_state, int event_flags,
     item->ssl = ssl;
 
     cq_push(thread->new_conn_queue, item);
-    
+
     MEMCACHED_CONN_DISPATCH(sfd, thread->thread_id);
     buf[0] = 'c';
     if (write(thread->notify_send_fd, buf, 1) != 1) {
         perror("Writing to thread notify pipe");
     }
 }
-
-// =e
-void donate_conn(conn *c) {
-    CQ_ITEM *item = cqi_new();
-    char buf[1];
-    if (item == NULL) {
-        /* Can't cleanly redispatch connection. close it forcefully. */
-        c->state = conn_closed;
-        close(c->sfd);
-        return;
-    }
-    int eid = c->thread->eid;;
-    LIBEVENT_THREAD *thread;
-    do{
-        eid++;
-        if(eid == settings.num_threads)
-            eid = 0;
-        thread = threads+eid;
-        
-    }
-    while(!thread->active);
-    
-    c->thread = thread;
-    item->sfd = c->sfd;
-    item->init_state = conn_new_cmd;
-    item->c = c;
-    item->mode = queue_donate;
-
-    cq_push(thread->new_conn_queue, item);
-
-    buf[0] = 'c';
-    if (write(thread->notify_send_fd, buf, 1) != 1) {
-        perror("Writing to thread notify pipe");
-    }
-}
-
-//
 
 /*
  * Re-dispatches a connection back to the original thread. Can be called from
@@ -952,15 +1102,38 @@ void memcached_thread_init(int nthreads, void *arg) {
 
         threads[i].notify_receive_fd = fds[0];
         threads[i].notify_send_fd = fds[1];
+
+       // showan: create a pipe to tarnfer  power mangament data
+       int power_fds[2];
+       if (pipe(power_fds)) {
+        printf("errror creating power msg saving");
+        }
+        threads[i].send_power_msg = power_fds[1];
+        threads[i].reciv_power_msg = power_fds[0];
+
+
+
 #ifdef EXTSTORE
         threads[i].storage = arg;
 #endif
-        setup_thread(&threads[i], i);
+        setup_thread(&threads[i]);
         /* Reserve three fds for the libevent base, and two for the pipe */
         stats_state.reserved_fds += 5;
+        threads[i].load =0; /*showan :  */
+        threads[i].active_conn = 0; /*showan */
+        threads[i].active= true; /* showan: true means thread is active*/
+        threads[i].am_i_a_dispatching = false; /* showan:  0 menas thread does  not dispatch now. Maybe later*/ 
+        threads[i].round=0;
+        threads[i].last_time_active= current_time;
+        threads[i].capacity=0;
+        threads[i].max_handled_load=0;
+        threads[i].index=i;
+        threads[i].number_of_guest =0;
+        threads[i].w_state= normal;
+
+        
+       
     }
-    threads[0].active = true;
-    threads[0].mother = true;
 
     /* Create threads after we've done all the libevent setup. */
     for (i = 0; i < nthreads; i++) {

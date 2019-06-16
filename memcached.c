@@ -114,7 +114,7 @@ static void conn_to_str(const conn *c, char *buf);
 static void settings_init(void);
 
 /* event handling, network IO */
-static void event_handler(const int fd, const short which, void *arg);
+void event_handler(const int fd, const short which, void *arg);
 static void conn_close(conn *c);
 static void conn_init(void);
 static bool update_event(conn *c, const int new_flags);
@@ -128,6 +128,11 @@ static int add_msghdr(conn *c);
 static void write_bin_error(conn *c, protocol_binary_response_status err,
                             const char *errstr, int swallow);
 static void write_bin_miss_response(conn *c, char *key, size_t nkey);
+extern  LIBEVENT_THREAD *threads; //showan
+extern struct power_saving power_stat; //showan
+extern void load_balncing();
+void conn_doneate(conn *c); // showan
+
 
 #ifdef EXTSTORE
 static void _get_extstore_cb(void *e, obj_io *io, int ret);
@@ -150,10 +155,14 @@ volatile int slab_rebalance_signal;
  */
 void *ext_storage;
 #endif
+
 /** file scope variables **/
 static conn *listen_conn = NULL;
 static int max_fds;
-static struct event_base *main_base;
+//static struct event_base *main_base;
+struct event_base *main_base;
+// showan: I removed the static part to make it avilable for thread.c 
+
 
 enum transmit_result {
     TRANSMIT_COMPLETE,   /** All done writing. */
@@ -316,10 +325,6 @@ static void settings_init(void) {
     settings.logger_watcher_buf_size = LOGGER_WATCHER_BUF_SIZE;
     settings.logger_buf_size = LOGGER_BUF_SIZE;
     settings.drop_privileges = false;
-    // =e
-    settings.thread_affinity = false;
-    settings.thread_affinity_offset = 0;
-    //
 #ifdef MEMCACHED_DEBUG
     settings.relaxed_privileges = false;
 #endif
@@ -372,6 +377,9 @@ static int add_msghdr(conn *c)
     return 0;
 }
 
+
+
+
 extern pthread_mutex_t conn_lock;
 
 /* Connection timeout thread bits */
@@ -410,7 +418,7 @@ static void *conn_timeout_thread(void *arg) {
                 continue;
 
             if (c->state != conn_new_cmd && c->state != conn_read)
-                continue;
+                continue;// showan: is this  a bug 
 
             if ((current_time - c->last_cmd_time) > settings.idle_timeout) {
                 buf[0] = 't';
@@ -555,6 +563,7 @@ conn *conn_new(const int sfd, enum conn_states init_state,
 
     assert(sfd >= 0 && sfd < max_fds);
     c = conns[sfd];
+    
 
     if (NULL == c) {
         if (!(c = (conn *)calloc(1, sizeof(conn)))) {
@@ -723,6 +732,17 @@ conn *conn_new(const int sfd, enum conn_states init_state,
         }
     }
 
+    /*  showan: intilize conn variables that we have added to connection */
+    c->num_ops_over_last_window=0; 
+    c->avg_load=0; 
+    c->rate=0; 
+    c->on_load= false;
+    c->capcity=0;
+    c->highest_rate=0;
+    c->home=-1; // fixme is it right
+    c->is_guest=false;
+
+
     event_set(&c->event, sfd, event_flags, event_handler, (void *)c);
     event_base_set(base, &c->event);
     c->ev_flags = event_flags;
@@ -741,24 +761,6 @@ conn *conn_new(const int sfd, enum conn_states init_state,
 
     return c;
 }
-
-// =e
-conn *reinitialize_events(conn *c) {
-    event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
-    event_base_set(c->thread->base, &c->event);
-
-    if (event_add(&c->event, 0) == -1) {
-        perror("event_add");
-        return NULL;
-    }
-    c->thread->connections++;
-    if (settings.verbose > 0)
-        fprintf(stderr, "thread %d received c=%d, connections=%d\n", c->thread->eid, c->sfd, c->thread->connections);
-
-    return c;
-}
-//
-
 #ifdef EXTSTORE
 static void recache_or_free(conn *c, io_wrap *wrap) {
     item *it;
@@ -1047,6 +1049,122 @@ static void conn_set_state(conn *c, enum conn_states state) {
         c->state = state;
     }
 }
+
+
+
+/******************************   measuring load and determining when is a good time to denote conns ********/
+long sampling_window =1;
+
+/* showan load variables   */
+/*
+unsigned long sampling_window= 1000; //   showan : sampling window in micro soecond
+  double cold_threshold; //  showan 
+ double  hot_threshold; //   showan 
+void check_worker_status( LIBEVENT_THREAD * thread)
+{
+LIBEVENT_THREAD * worker= thread;
+
+if(worker->load >=  hot_threshold){
+worker->w_state= hot;
+worker->am_i_a_dispatching = true;
+}
+else if(worker->load <= cold_threshold) 
+{
+worker->w_state= cold;
+worker->am_i_a_dispatching = true;
+}
+else
+{
+worker->w_state= normal;
+worker->am_i_a_dispatching = false;
+
+}
+}
+
+
+*/
+/*
+void conn_transfer(conn *c, bool go_to_attacker, bool go_home) {
+
+if(c->state == conn_closed || c->state == conn_closing )
+return;
+    //int new_tid = choose_next_worker();
+    //LIBEVENT_THREAD *thread = threads + new_tid;
+    //printf("the for the connection is  %d \n",c->state);
+   // printf("hey %d \n",new_tid);
+    
+    if(c->thread != NULL)
+    {
+
+//printf("by %d \n",c->sfd);
+    c->ev_flags = EV_READ | EV_PERSIST;
+    //fixme  -- showan: should we delete a c-> event????  
+    if (event_del(&c->event) == -1)  perror("event_del");
+    //c->thread = thread;
+    //c->thread= threads[power_stat.attacaker]; fixe me we are not sure if this works
+    event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
+    if (event_base_set(c->thread->base, &c->event)==-1)
+    printf("eroooooooooooooooooor");
+    //c->state = conn_new_cmd;
+    // TODO: call conn_cleanup/fail/etc
+      if (event_add(&c->event, 0) == -1) {
+        perror("event_add");
+     }
+    }
+
+
+
+}
+*/
+
+
+/*
+
+void conn_transfer2()
+{
+
+
+    CQ_ITEM *item = cqi_new(); // showan: can we have this all the time- mybe they are limite fixme
+    char buf[1];
+    if (item == NULL) {
+        close(sfd);
+        // given that malloc failed this may also fail, but let's try 
+        fprintf(stderr, "Failed to allocate memory for connection object\n");
+        return ;
+    }
+    
+    int tid = (last_thread + 1) % settings.num_threads; // showant
+    //int tid= 1; 
+     //int  tid = choose_next_worker(); 
+
+
+
+    LIBEVENT_THREAD *thread = threads + tid;
+
+    last_thread = tid;
+
+    item->sfd = sfd;
+    item->init_state = init_state;
+    item->event_flags = event_flags;
+    item->read_buffer_size = read_buffer_size;
+    item->transport = transport;
+    item->mode = queue_new_conn;
+    item->ssl = ssl;
+
+    cq_push(thread->new_conn_queue, item);
+
+    MEMCACHED_CONN_DISPATCH(sfd, thread->thread_id);
+    buf[0] = 'c';
+    if (write(thread->notify_send_fd, buf, 1) != 1) {
+        perror("Writing to thread notify pipe");
+    }
+}
+
+*/
+
+
+
+
 
 /*
  * Ensures that there is room for another struct iovec in a connection's
@@ -3104,7 +3222,7 @@ static size_t tokenize_command(char *command, token_t *tokens, const size_t max_
     for (i = 0; i < len; i++) {
         if (*e == ' ') {
             if (s != e) {
-                tokens[ntokens].value = s;
+                tokens[ntokens].value = s; 
                 tokens[ntokens].length = e - s;
                 ntokens++;
                 *e = '\0';
@@ -5637,6 +5755,10 @@ static int read_into_chunked_item(conn *c) {
     return total;
 }
 
+
+
+
+
 static void drive_machine(conn *c) {
     bool stop = false;
     int sfd;
@@ -5645,6 +5767,7 @@ static void drive_machine(conn *c) {
     int nreqs = settings.reqs_per_event;
     int res;
     const char *str;
+    bool guests_should_go_home = false; // showan: should we send guests home 
 #ifdef HAVE_ACCEPT4
     static int  use_accept4 = 1;
 #else
@@ -5744,7 +5867,7 @@ static void drive_machine(conn *c) {
 #endif
 
                 dispatch_conn_new(sfd, conn_new_cmd, EV_READ | EV_PERSIST,
-                                     DATA_BUFFER_SIZE, c->transport, ssl_v, stats_state.curr_conns);
+                                     DATA_BUFFER_SIZE, c->transport, ssl_v);
             }
 
             stop = true;
@@ -5816,6 +5939,135 @@ static void drive_machine(conn *c) {
                 }
                 stop = true;
             }
+             
+            c->num_ops_over_last_window ++; //  showan: connections is handling a new operation
+            
+            int curr_time= current_time;
+            c->thread->last_time_active =  curr_time; 
+            char power_msg[1];
+            
+
+              //showan: last time thread is active  
+            //printf(" total number of requets %ld \n", c->num_ops_over_last_window  );
+              
+              if ( c->num_ops_over_last_window  <=2)
+                  c->last_sampling_time = curr_time;
+              if (c->num_ops_over_last_window > 500 ){
+            //if(curr_time != c->last_sampling_time){ // showan //
+                //printf(" current timr %d\n ", curr_time - c->last_sampling_time  );
+                //printf(" ------------------------------------\n ");
+                ///printf(" current time:%d\n ", curr_time   );
+               /// printf("last_sampling_time:%d \n", c->last_sampling_time );
+               /// printf(" num operation %ld \n", c->num_ops_over_last_window );
+                int denom= (curr_time - c->last_sampling_time );
+                if (denom  <= 0 ) denom= 1; 
+               //c->rate= c->num_ops_over_last_window/(curr_time - c->last_sampling_time ); //showan
+                if(c->on_load)
+                c->thread->load-= c->rate;
+                else
+                c->on_load=true; // I do this here beause I want to excute this instrution only one time 
+
+               c->rate= (c->num_ops_over_last_window + (denom-1))/ denom; 
+               c->num_ops_over_last_window = 0;  // showan 
+               c->last_sampling_time= curr_time;  // showan 
+               c->thread->load+=c->rate;
+               if(c->thread->load > c->thread->max_handled_load)
+               c->thread->max_handled_load= c->thread->load;
+               c->thread->capacity= c->thread->max_handled_load - c->thread->load;
+               
+               //////printf("%f \n", c->thread->load);
+               ////printf("Thread (%d) load is: %f \n", c->thread->index,c->thread->load);
+              //// printf("Thread (%d) max_handled_load is: %f \n", c->thread->index,c->thread->max_handled_load);
+              //// printf("Thread (%d) capacity is: %f \n", c->thread->index,c->thread->capacity);
+               ///printf("--------------\n");
+               ///printf("rate is: %f \n", c->rate);
+               ///printf("thread load is: %f \n", c->thread->load);
+               
+               if(((c->thread->load < power_stat.lowest_load )  || c->thread->index == power_stat.victim_worker)&& power_stat.victim_update == true )
+               {
+                   
+             power_msg[0]= 'l'; 
+             
+            if(write(c->thread->send_power_msg, power_msg, 1) != 1)
+            printf("error in sending message to dispatcher");
+
+               }
+
+               if(c->thread->index != power_stat.victim_worker)
+               if((c->thread->capacity > power_stat.highets_capacity )||  (c->thread->index == power_stat.attacker))
+               {
+                   
+             power_msg[0]= 'c'; 
+             
+            if(write(c->thread->send_power_msg, power_msg, 1) != 1)
+            printf("error in sending message to dispatcher");
+
+               }
+               
+               
+                /*balnce loadd    
+                if(pthread_mutex_trylock(&mutex_lb)==0)
+                {
+                    if(c->thread ==  thread_with_lowest_load)
+                    {
+
+                            lowest_load = c->thread->load;
+
+                    }
+                    
+                   if (c->thread->load < lowest_load)
+                   {
+                 lowest_load = c->thread->load;
+
+                     thread_with_lowest_load = c->thread;
+                     
+
+                   } 
+                   if(  c->thread->load >  lowest_load )   
+                   {
+                   int avg=     (c->thread->load +lowest_load)/2;
+                   int implance=  c->thread->load- avg; 
+                   if( implance >  20) // fixme it must be  number that indicates it is worth doing migration
+                   {
+                     if(c->rate <  implance)
+                     {  // do the migration
+
+                        c->thread->load -= c->rate; 
+                        c->on_load = false;
+
+                         
+                       if (event_del(&c->event) == -1)  printf("load balance error ***********************\n\n");
+                        c->thread = thread_with_lowest_load;
+                         event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
+                                 event_base_set(c->thread->base, &c->event);
+                                c->state = conn_new_cmd;
+
+                                // TODO: call conn_cleanup/fail/etc
+                    if (event_add(&c->event, 0) == -1) {
+                              printf("load balance error ***********************\n\n");
+                                 }
+
+                     } 
+
+
+                    
+                   } }
+
+                   //unlock the lock 
+                   pthread_mutex_unlock(&mutex_lb);
+
+
+
+                } 
+              
+
+                 */ 
+               
+            } 
+           
+
+            
+            
             break;
 
         case conn_nread:
@@ -5824,7 +6076,7 @@ static void drive_machine(conn *c) {
                 break;
             }
 
-            /* Check if rbytes < 0, to prevent crash */
+            /* Check if rbytes < 0, to prevent crash *///
             if (c->rlbytes < 0) {
                 if (settings.verbose) {
                     fprintf(stderr, "Invalid rlbytes to read: len %d\n", c->rlbytes);
@@ -6023,14 +6275,18 @@ static void drive_machine(conn *c) {
             break;
 
         case conn_closing:
-            // =e
-            c->thread->connections--;
-            //
             if (IS_UDP(c->transport))
                 conn_cleanup(c);
             else
                 conn_close(c);
             stop = true;
+
+            /*showan we need to reduce the load of the connection from its thread load */
+            /* fixme: it seem that bye is never called*/
+           // printf("bye******************************************************************************");
+            c->thread->load -= c->rate; // showan fixme
+            c->thread->active_conn--; /* showan: reduce number of active connections when current connection is closed*/
+            printf("(%d) decrementing %d to %ld in closing\n", c->sfd, c->thread->index, c->thread->active_conn);  // =e
             break;
 
         case conn_closed:
@@ -6048,23 +6304,60 @@ static void drive_machine(conn *c) {
         }
     }
 
-    // =e
-    // if(c->thread){
-    //     // fprintf(stderr,"Thread %lu, gets %lu\n", c->thread->thread_id, c->thread->stats.get_cmds);
-    //     if(!c->thread->mother && !(c->thread->stats.get_cmds % 100000)) {
-    //         c->thread->active = false;
-    //         if (settings.verbose > 0)
-    //             fprintf(stderr, "Signing off %d, conns: %d\n", c->thread->eid, c->thread->connections);
-    //     }
-    //     if(!c->thread->active) {
-    //         if (settings.verbose > 0)
-    //             fprintf(stderr, "%d donating con %d , conns: %d\n", c->thread->eid, c->sfd, c->thread->connections);
-    //         c->thread->connections--;
-    //         event_del(&c->event);
-    //         donate_conn(c);
-    //     }
-    // }
 
+
+
+/*showan: check the load to set the state of the worker
+the question is, is it right to do this here which is crtical path in processing memcached requests
+*/
+// check_worker_status(c->thread);
+
+
+/* showan:  if worker is in dispatching mode, it donates conncetion
+the question is which connection- just randomly chooses one????*/
+
+
+//    if(c->thread->am_i_a_dispatching)
+  //  {
+    //    denote_connection();
+//
+    //}
+    if(c->is_guest) //=e
+        printf("(%d) guest state %d    ", c->sfd, c->state);
+    
+    if(c->thread!=NULL)
+    {
+    if( (power_stat.victim_worker == c->thread->index) && (power_stat.attacker!= -1)  && (power_stat.victim_worker != power_stat.attacker  ))
+    if (power_stat.load_balancing== true){
+        c->is_guest = true;
+        c->thread->active_conn --;
+        printf("(%d) decrementing %d to %ld in transfer\n", c->sfd, c->thread->index, c->thread->active_conn);  // =e
+        if(c->thread->active_conn == 0)
+        {
+            c->thread->w_state= cold;
+            power_stat.load_balancing= false;
+            power_stat.victim_update= true;
+            printf("booogh %d\n", c->thread->index);
+        }
+    
+     conn_transfer3(c, true, false);
+    }
+
+    if(guests_should_go_home)
+    {
+      if(c->is_guest)
+      {
+       c->thread->number_of_guest --; // w know c->thread is not his/her home
+       c->is_guest= false;
+       conn_transfer3(c, false, true);
+
+      }
+
+    }
+}
+
+   
+    
     return;
 }
 
@@ -6277,7 +6570,7 @@ static int server_socket(const char *interface,
                 int per_thread_fd = c ? dup(sfd) : sfd;
                 dispatch_conn_new(per_thread_fd, conn_read,
                                   EV_READ | EV_PERSIST,
-                                  UDP_READ_BUFFER_SIZE, transport, NULL, stats_state.curr_conns);
+                                  UDP_READ_BUFFER_SIZE, transport, NULL);
             }
         } else {
             if (!(listen_conn_add = conn_new(sfd, conn_listening,
@@ -6479,7 +6772,9 @@ static struct event clockevent;
  * Note that users who are setting explicit dates for expiration times *must*
  * ensure their clocks are correct before starting memcached. */
 static void clock_handler(const int fd, const short which, void *arg) {
-    struct timeval t = {.tv_sec = 1, .tv_usec = 0};
+    //struct timeval t = {.tv_sec = 1, .tv_usec = 0}; // tshowan
+    struct timeval t = {.tv_sec = 0, .tv_usec = 1000}; // showan: call this function every 1ms
+    //
     static bool initialized = false;
 #if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_MONOTONIC)
     static bool monotonic = false;
@@ -6513,6 +6808,7 @@ static void clock_handler(const int fd, const short which, void *arg) {
         authfile_load(settings.auth_file);
     }
 
+   
     evtimer_set(&clockevent, clock_handler, 0);
     event_base_set(main_base, &clockevent);
     evtimer_add(&clockevent, &t);
@@ -6522,19 +6818,30 @@ static void clock_handler(const int fd, const short which, void *arg) {
         struct timespec ts;
         if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
             return;
-        current_time = (rel_time_t) (ts.tv_sec - monotonic_start);
+        //current_time = (rel_time_t) (ts.tv_sec - monotonic_start); tshowan
+        current_time = (rel_time_t) ((((ts.tv_sec - monotonic_start) * 1000000000) + ts.tv_nsec)/ 1000000); //tshowan
+       // printf("main timer:----------: %d \n", current_time); //tshowan
+
+       // showan : we call load balncing here. I dont know if it is right thing to do
+       if (current_time - power_stat.last_laod_balancing > 10000 ) // fixme 1000ms is pramater that should be fixed as soon as possible
+          {
+          load_balncing(); //fixme uncomment to turn on load balncing
+          power_stat.last_laod_balancing = current_time;
+          }
         return;
     }
 #endif
     {
+        //printf("inside timer: %d \n", current_time); //tshowan
         struct timeval tv;
         gettimeofday(&tv, NULL);
-        current_time = (rel_time_t) (tv.tv_sec - process_started);
+        //current_time = (rel_time_t) (tv.tv_sec - process_started); //tshowan
+        current_time = (rel_time_t) (tv.tv_usec );
+       
     }
 }
 
 static void usage(void) {
-    // =e added Q and O
     printf(PACKAGE " " VERSION "\n");
     printf("-p, --port=<num>          TCP port to listen on (default: 11211)\n"
            "-U, --udp-port=<num>      UDP port to listen on (default: 0, off)\n"
@@ -6547,8 +6854,6 @@ static void usage(void) {
            "                          disable for specific listeners (-l notls:<ip>:<port>) \n"
 #endif
            "-d, --daemon              run as a daemon\n"
-           "-Q                        set distinct cpu affinity for threads, round-robin\n"
-           "-O                        set cpu affinity offset, starts from this core (default: 0)\n"
            "-r, --enable-coredumps    maximize core file limit\n"
            "-u, --user=<user>         assume identity of <username> (only when run as root)\n"
            "-m, --memory-limit=<num>  item memory in megabytes (default: 64 MB)\n"
@@ -7135,7 +7440,6 @@ int main (int argc, char **argv) {
 
     /* set stderr non-buffering (for running under, say, daemontools) */
     setbuf(stderr, NULL);
-    // =e   added O and Q
     char *shortopts =
           "a:"  /* access mask for unix socket */
           "A"  /* enable admin shutdown command */
@@ -7151,8 +7455,6 @@ int main (int argc, char **argv) {
           "r"   /* maximize core file limit */
           "v"   /* verbose */
           "d"   /* daemon mode */
-          "Q"   /* Thread Affinity */
-          "O:"   /* Affinity offset */
           "l:"  /* interface to listen on */
           "u:"  /* user identity to run as */
           "P:"  /* save PID in file */
@@ -7200,7 +7502,6 @@ int main (int argc, char **argv) {
         {"threads", required_argument, 0, 't'},
         {"enable-largepages", no_argument, 0, 'L'},
         {"max-reqs-per-event", required_argument, 0, 'R'},
-        {"affinity-offset", required_argument, 0, 'O'},   // =e add arg for affinity offset
         {"disable-cas", no_argument, 0, 'C'},
         {"listen-backlog", required_argument, 0, 'b'},
         {"protocol", required_argument, 0, 'B'},
@@ -7366,18 +7667,6 @@ int main (int argc, char **argv) {
         case 'b' :
             settings.backlog = atoi(optarg);
             break;
-        // =e
-        case 'Q':
-            settings.thread_affinity = true;
-            break;
-        case 'O':
-            settings.thread_affinity_offset = atoi(optarg);
-            if (settings.thread_affinity_offset < 0) {
-                fprintf(stderr, "Core offset must be greater than 0 and less than number of cpus\n");
-                return 1;
-            }
-            break;
-        //
         case 'B':
             protocol_specified = true;
             if (strcmp(optarg, "auto") == 0) {

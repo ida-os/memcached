@@ -5961,20 +5961,15 @@ static void drive_machine(conn *c) {
                /// printf("last_sampling_time:%d \n", c->last_sampling_time );
                /// printf(" num operation %ld \n", c->num_ops_over_last_window );
                 int denom= (curr_time - c->last_sampling_time );
-                if (denom  <= 0 ) denom= 1; 
+                if (denom  <= 0 ) 
+                    denom= 1; 
                //c->rate= c->num_ops_over_last_window/(curr_time - c->last_sampling_time ); //showan
                 if(c->on_load)
-                c->thread->load-= c->rate;
+                    c->thread->load-= c->rate;
                 else
                 {
-                c->on_load=true; // I do this here beause I want to excute this instrution only one time 
-                if(c->is_guest)
-                {
-                c->thread->number_of_guest_not_onload --; 
-                if (c->thread->number_of_guest_not_onload < 1)
-                c->thread->accept_guest= true;
-
-                }
+                    c->on_load=true; // I do this here beause I want to excute this instrution only one time 
+                
                 }
 
                c->rate= (c->num_ops_over_last_window + (denom-1))/ denom; 
@@ -6332,29 +6327,32 @@ the question is which connection- just randomly chooses one????*/
 //
     //}
     
-    if(c->thread!=NULL && c->state== conn_new_cmd)
+    if(c->thread!=NULL && c->state== conn_new_cmd )
     {
-    if( (power_stat.victim_worker == c->thread->index) && (power_stat.attacker!= -1)  && (power_stat.victim_worker != power_stat.attacker  ))
-    if (power_stat.load_balancing== true){
-    c->is_guest = true;
-    c->thread->active_conn --;
-    if(c->thread->active_conn == 0)
-    {
-    c->thread->w_state= cold;
-    power_stat.load_balancing= false;
-    power_stat.victim_update= true;
-    }
+        if( (power_stat.victim_worker == c->thread->index) && (power_stat.attacker!= -1)  && (power_stat.victim_worker != power_stat.attacker  ))
+            if (power_stat.load_balancing== true && c->thread->transfering_epoch != power_stat.transfering_epoch){
+                c->thread->transfering_epoch = power_stat.transfering_epoch; // showan: we use this to slow down transferring
+                c->is_guest = true;
+                c->thread->active_conn --;
+                c->thread->load-= c->rate;
+                if(c->thread->load < 0)
+                     c->thread->load =0;
+                if(c->thread->active_conn == 0){
+                    c->thread->w_state= cold;
+                    power_stat.load_balancing= false;
+                    power_stat.victim_update= true;
+                }
     
-     conn_transfer3(c, true, false);
-    }
+                conn_transfer3(c, true, false);
+                }
 
     if(guests_should_go_home)
     {
       if(c->is_guest)
       {
-       c->thread->number_of_guest --; // w know c->thread is not his/her home
-       c->is_guest= false;
-       conn_transfer3(c, false, true);
+        c->thread->number_of_guest --; // w know c->thread is not his/her home
+        c->is_guest= false;
+        conn_transfer3(c, false, true);
 
       }
 
@@ -6832,6 +6830,7 @@ static void clock_handler(const int fd, const short which, void *arg) {
           {
           load_balncing(); //fixme uncomment to turn on load balncing
           power_stat.last_laod_balancing = current_time;
+          power_stat.transfering_epoch++; 
           }
         return;
     }

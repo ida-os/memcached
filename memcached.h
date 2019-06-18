@@ -468,6 +468,7 @@ double highets_capacity;
 bool load_balancing;
 bool victim_update; // showan: is it allowed to update victim
 rel_time_t last_laod_balancing;
+long transfering_epoch;
 };
 
 
@@ -632,6 +633,7 @@ typedef struct {
     int reciv_power_msg;
     long number_of_guest;
     long number_of_guest_not_onload;
+    long transfering_epoch;
  
 
 #ifdef EXTSTORE

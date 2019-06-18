@@ -5971,7 +5971,7 @@ static void drive_machine(conn *c) {
                     c->on_load=true; // I do this here beause I want to excute this instrution only one time 
                 
                 }
-               if(c->is_gust)
+               if(c->is_guest)
                     printf("Hi im a guest");
                c->rate= (c->num_ops_over_last_window + (denom-1))/ denom; 
                c->num_ops_over_last_window = 0;  // showan 

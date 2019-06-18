@@ -5971,7 +5971,8 @@ static void drive_machine(conn *c) {
                     c->on_load=true; // I do this here beause I want to excute this instrution only one time 
                 
                 }
-
+               if(c->is_gust)
+                    printf("Hi im a guest");
                c->rate= (c->num_ops_over_last_window + (denom-1))/ denom; 
                c->num_ops_over_last_window = 0;  // showan 
                c->last_sampling_time= curr_time;  // showan 
@@ -6326,11 +6327,15 @@ the question is which connection- just randomly chooses one????*/
     //    denote_connection();
 //
     //}
-    
-    if(c->thread!=NULL && c->state== conn_new_cmd )
-    {
-        if( (power_stat.victim_worker == c->thread->index) && (power_stat.attacker!= -1)  && (power_stat.victim_worker != power_stat.attacker  ))
+    if(c->state == 1)
+    printf(" In thread(%d)---c->state is %d \n", c->thread->index,c->state );
+   // if(c->thread!=NULL && c->state== conn_new_cmd )
+   if(c->thread!=NULL)
+    {  
+        if( (power_stat.victim_worker == c->thread->index) && (power_stat.attacker!= -1)  && (power_stat.victim_worker != power_stat.attacker  )){
+            
             if (power_stat.load_balancing== true && c->thread->transfering_epoch != power_stat.transfering_epoch){
+               
                 c->thread->transfering_epoch = power_stat.transfering_epoch; // showan: we use this to slow down transferring
                 c->is_guest = true;
                 c->thread->active_conn --;
@@ -6345,6 +6350,7 @@ the question is which connection- just randomly chooses one????*/
     
                 conn_transfer3(c, true, false);
                 }
+        }
 
     if(guests_should_go_home)
     {

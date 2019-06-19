@@ -331,9 +331,10 @@ double highets_capacity;
 bool load_balancing;
 bool victim_update;
 rel_time_t last_laod_balancing;
+long transfering_epoch;
 }
 */
-struct power_saving power_stat = {-1, -1, 99999999, 0,false, true, 0};
+struct power_saving power_stat = {-1, -1, 99999999, 0,false, true, 0, 0};
 // 
 
 
@@ -434,7 +435,7 @@ c->thread=  thread;
     }
     
     item->c = c;
-    item->init_state = conn_new_cmd; // showan: fixme do we need this
+    item->init_state = conn_new_cmd; // showan: fixme- do we need this
     item->mode = queue_transfer;
 
     cq_push(thread->new_conn_queue, item);
@@ -635,7 +636,9 @@ static void thread_libevent_process(int fd, short which, void *arg) {
                     }
                 } else {
                     c->thread = me;
-                    c->on_load= false; // showan: should we do this?
+                    c->on_load= true; 
+                    c->thread->load += c->rate;
+
                     me->active_conn++; /* showan: increase the connecton number of thread by one*/
                     printf("(%d) incrementing %d to %ld in transfer\n", c->sfd, c->thread->index, c->thread->active_conn);  // =e
                     //if(c->is_guest == false)
@@ -644,8 +647,8 @@ static void thread_libevent_process(int fd, short which, void *arg) {
                     if(c->is_guest  == true)
                     {
                      me->number_of_guest ++;
-                     me->number_of_guest_not_onload ++;
-                     me->accept_guest = false; // I cannot accept guest connections anymore because this guest is not on load an therefore the thread capacity is not correct
+                    // me->number_of_guest_not_onload ++;
+                    
                     }
              c->ev_flags = EV_READ | EV_PERSIST;
     
@@ -653,7 +656,7 @@ static void thread_libevent_process(int fd, short which, void *arg) {
                
 
             event_set(&c->event, c->sfd, c->ev_flags, event_handler, (void *)c);
-            if (event_base_set(c->thread->base, &c->event)==-1)
+            event_base_set(c->thread->base, &c->event);
             if (event_add(&c->event, 0) == -1) {
             perror("event_add");
      }
@@ -1137,6 +1140,7 @@ void memcached_thread_init(int nthreads, void *arg) {
         threads[i].w_state= normal;
         threads[i].accept_guest = true;
         threads[i].number_of_guest_not_onload=0;
+        threads[i].transfering_epoch = 0;
 
         
        

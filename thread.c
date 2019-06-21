@@ -333,9 +333,13 @@ bool load_balancing;
 bool victim_update;
 rel_time_t last_laod_balancing;
 long transfering_epoch;
+long monitoring_epoch; // showan: after each transfering we take a vote from all workers to choose the woker with highest capacity
+int num_active_workers; // showan: shows the number of active workers= All workers - turned off workers
+int num_observed_worker_over_epoch; // showan: if we observe all workers capcity, we know who has the haighest capcity, who becomes attcker
 }
 */
-struct power_saving power_stat = {-1, -1, 99999999, 0,false, true, 0, 0};
+//struct power_saving power_stat = {-1, -1, 99999999, 0,false, true, 0, 0, 1, settings.num_threads, 0 }; // move this to memcached_thread_init
+struct power_saving power_stat;
 // 
 
 
@@ -398,6 +402,18 @@ static void power_saving_libevent(int fd, short which, void *arg) {
              // printf("the attacker thread is %d and the capacity is %f \n", me->index, me->capacity);
 
          }
+         if(me->monitoring_epoch != power_stat.monitoring_epoch)
+         {   me->monitoring_epoch = power_stat.monitoring_epoch;
+             power_stat.num_observed_worker_over_epoch ++;
+             //printf("----------------> %d \n ",  power_stat.num_observed_worker_over_epoch );
+             if (power_stat.num_observed_worker_over_epoch >= power_stat.num_active_workers -1 ){
+                // if (power_stat.num_observed_worker_over_epoch >= 1 ){
+                 power_stat.transfering_epoch ++;
+                 power_stat.num_observed_worker_over_epoch =0;
+             }
+
+
+         }
          break;
     }
     
@@ -416,13 +432,15 @@ LIBEVENT_THREAD *thread ;
 if (go_to_attacker)
 {
     thread= threads +power_stat.attacker;
-    printf("go from home (%d) to attacker (%d) \n", c->thread->index,  power_stat.attacker );
+    printf("go from home (%d)  capacity:%f- load:%f -activeCon: %ld  to attacker (%d) with capcaity: %f- load:%f- activeCon:%ld \n", c->thread->index, c->thread->capacity, c->thread->load, c->thread->active_conn,  power_stat.attacker, threads[ power_stat.attacker].capacity, threads[ power_stat.attacker].load, threads[ power_stat.attacker].active_conn );
 
 }   
 else  
 {  
 thread= threads+c->home;
-printf("go from hattacker  (%d) to home (%d) \n",c->thread->index,  c->home);
+
+////printf("go from hattacker  (%d) to home (%d) \n",c->thread->index,  c->home);
+ printf("----->go from atttacker (%d)  capacity:%f- load:%f -activeCon: %ld  to home (%d) with capcaity: %f- load:%f- activeCon:%ld \n", c->thread->index, c->thread->capacity, c->thread->load, c->thread->active_conn,  c->home, threads[ c->home].capacity, threads[ c->home].load, threads[ c->home].active_conn );
 }
 c->thread=  thread;
     CQ_ITEM *item = cqi_new();
@@ -639,7 +657,9 @@ static void thread_libevent_process(int fd, short which, void *arg) {
                     c->thread = me;
                     c->on_load= true; 
                     c->thread->load += c->rate;
+                    c->thread->capacity= c->thread->max_handled_load - c->thread->load;// fixem - should we do thi
 
+                    power_stat.monitoring_epoch ++; // showan: we can send a msg to dispatchet to do this. But  I thin race condtion wont happen now
                     me->active_conn++; /* showan: increase the connecton number of thread by one*/
                     //if(c->is_guest == false)
                     //  c->home =me->index;  /* showan*/
@@ -1141,6 +1161,23 @@ void memcached_thread_init(int nthreads, void *arg) {
         threads[i].accept_guest = true;
         threads[i].number_of_guest_not_onload=0;
         threads[i].transfering_epoch = 0;
+        threads[i].monitoring_epoch =0;
+
+
+
+
+power_stat.victim_worker =-1;
+power_stat.attacker= -1;
+power_stat.lowest_load= 99999999;
+power_stat.highets_capacity =0;
+power_stat.load_balancing = false;
+power_stat.victim_update= true;
+power_stat.last_laod_balancing= 0;
+power_stat.transfering_epoch= 0;
+power_stat.monitoring_epoch= 1; 
+power_stat.num_active_workers= nthreads; 
+power_stat.num_observed_worker_over_epoch= 0; 
+//power_stat = {-1, -1, 99999999, 0,false, true, 0, 0, 1, nthreads, 0 }; // showan
 
         
        

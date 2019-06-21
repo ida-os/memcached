@@ -339,6 +339,10 @@ static void settings_init(void)
     settings.logger_watcher_buf_size = LOGGER_WATCHER_BUF_SIZE;
     settings.logger_buf_size = LOGGER_BUF_SIZE;
     settings.drop_privileges = false;
+    // =e
+    settings.thread_affinity = false;
+    settings.thread_affinity_offset = 0;
+    //
 #ifdef MEMCACHED_DEBUG
     settings.relaxed_privileges = false;
 #endif
@@ -7365,7 +7369,7 @@ static void drive_machine(conn *c)
             // printf("bye******************************************************************************");
             c->thread->load -= c->rate;                                                                           // showan fixme
             c->thread->active_conn--;                                                                             /* showan: reduce number of active connections when current connection is closed*/
-            printf("(%d) decrementing %d to %ld in closing\n", c->sfd, c->thread->index, c->thread->active_conn); // =e
+            //printf("(%d) decrementing %d to %ld in closing\n", c->sfd, c->thread->index, c->thread->active_conn); // =e
             break;
 
         case conn_closed:
@@ -7983,7 +7987,7 @@ static void clock_handler(const int fd, const short which, void *arg)
         current_time = (rel_time_t)(tv.tv_usec);
     }
 }
-
+// =e added Q and O
 static void usage(void)
 {
     printf(PACKAGE " " VERSION "\n");
@@ -7998,6 +8002,8 @@ static void usage(void)
            "                          disable for specific listeners (-l notls:<ip>:<port>) \n"
 #endif
            "-d, --daemon              run as a daemon\n"
+           "-Q                        set distinct cpu affinity for threads, round-robin\n"
+           "-O                        set cpu affinity offset, starts from this core (default: 0)\n"
            "-r, --enable-coredumps    maximize core file limit\n"
            "-u, --user=<user>         assume identity of <username> (only when run as root)\n"
            "-m, --memory-limit=<num>  item memory in megabytes (default: 64 MB)\n"
@@ -8618,6 +8624,7 @@ int main(int argc, char **argv)
     init_lru_maintainer();
 
     /* set stderr non-buffering (for running under, say, daemontools) */
+    // =e   added O and Q
     setbuf(stderr, NULL);
     char *shortopts =
         "a:"  /* access mask for unix socket */
@@ -8634,6 +8641,8 @@ int main(int argc, char **argv)
         "r"   /* maximize core file limit */
         "v"   /* verbose */
         "d"   /* daemon mode */
+        "Q"   /* Thread Affinity */
+        "O:"   /* Affinity offset */
         "l:"  /* interface to listen on */
         "u:"  /* user identity to run as */
         "P:"  /* save PID in file */
@@ -8681,6 +8690,7 @@ int main(int argc, char **argv)
         {"threads", required_argument, 0, 't'},
         {"enable-largepages", no_argument, 0, 'L'},
         {"max-reqs-per-event", required_argument, 0, 'R'},
+        {"affinity-offset", required_argument, 0, 'O'},   // =e add arg for affinity offset
         {"disable-cas", no_argument, 0, 'C'},
         {"listen-backlog", required_argument, 0, 'b'},
         {"protocol", required_argument, 0, 'B'},
@@ -8863,6 +8873,18 @@ int main(int argc, char **argv)
         case 'b':
             settings.backlog = atoi(optarg);
             break;
+        // =e
+        case 'Q':
+            settings.thread_affinity = true;
+            break;
+        case 'O':
+            settings.thread_affinity_offset = atoi(optarg);
+            if (settings.thread_affinity_offset < 0) {
+                fprintf(stderr, "Core offset must be greater than 0 and less than number of cpus\n");
+                return 1;
+            }
+            break;
+        //
         case 'B':
             protocol_specified = true;
             if (strcmp(optarg, "auto") == 0)

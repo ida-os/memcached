@@ -6784,7 +6784,8 @@ static void drive_machine(conn *c)
     int nreqs = settings.reqs_per_event;
     int res;
     const char *str;
-    bool guests_should_go_home = false; // showan: should we send guests home
+    //bool guests_should_go_home = false; // showan: should we send guests home
+    int thereshold = 2; // showan: if capapcity is less than this go home- we should have a logic for thereshold
 #ifdef HAVE_ACCEPT4
     static int use_accept4 = 1;
 #else
@@ -7019,8 +7020,7 @@ static void drive_machine(conn *c)
                 {
                     c->on_load = true; // I do this here beause I want to excute this instrution only one time
                 }
-                // if (c->is_guest)
-                //     printf("Hi im a guest");
+
                 c->rate = (c->num_ops_over_last_window + (denom - 1)) / denom;
                 c->num_ops_over_last_window = 0;   // showan
                 c->last_sampling_time = curr_time; // showan
@@ -7047,7 +7047,7 @@ static void drive_machine(conn *c)
                 }
 
                 if (c->thread->index != power_stat.victim_worker)
-                    if ((c->thread->capacity > power_stat.highets_capacity) || (c->thread->index == power_stat.attacker))
+                    if ((c->thread->capacity > power_stat.highets_capacity) || (c->thread->index == power_stat.attacker) || (c->thread->monitoring_epoch != power_stat.monitoring_epoch))
                     {
 
                         power_msg[0] = 'c';
@@ -7367,8 +7367,8 @@ static void drive_machine(conn *c)
             /*showan we need to reduce the load of the connection from its thread load */
             /* fixme: it seem that bye is never called*/
             // printf("bye******************************************************************************");
-            c->thread->load -= c->rate;                                                                           // showan fixme
-            c->thread->active_conn--;                                                                             /* showan: reduce number of active connections when current connection is closed*/
+            c->thread->load -= c->rate; // showan fixme
+            c->thread->active_conn--;   /* showan: reduce number of active connections when current connection is closed*/
             //printf("(%d) decrementing %d to %ld in closing\n", c->sfd, c->thread->index, c->thread->active_conn); // =e
             break;
 
@@ -7400,10 +7400,11 @@ the question is which connection- just randomly chooses one????*/
     //    denote_connection();
     //
     //}
-    // if (c->state == 1)
-    //     printf(" In thread(%d)---c->state is %d \n", c->thread->index, c->state);
+
+    //if(c->state == 1)
+    //printf(" c -rebytes(%d)---c->state is %d \n", c->rbytes,c->state );
     // if(c->thread!=NULL && c->state== conn_new_cmd )
-    if (c->thread != NULL)
+    if (c->thread != NULL && c->rbytes == 0) // showan: I am not sure if checking rbytes is a right thing to do
     {
         if ((power_stat.victim_worker == c->thread->index) && (power_stat.attacker != -1) && (power_stat.victim_worker != power_stat.attacker))
         {
@@ -7422,24 +7423,32 @@ the question is which connection- just randomly chooses one????*/
                     c->thread->w_state = cold;
                     power_stat.load_balancing = false;
                     power_stat.victim_update = true;
+                    power_stat.num_active_workers--; // showan: reduce the number of active workers-
                 }
 
                 conn_transfer3(c, true, false);
             }
         }
 
-        if (guests_should_go_home)
+        //if(c->thread->capacity <= thereshold)
+        if (thereshold == 10)
         {
+
+            // showan :remeber to increase the number of acrive worker if we go back to a turned off worker
             if (c->is_guest)
             {
-                c->thread->number_of_guest--; // w know c->thread is not his/her home
+                c->thread->active_conn--;
+                c->thread->number_of_guest--; // // w know c->thread is not his/her home
                 c->is_guest = false;
+                c->thread->load -= c->rate;
+                if (c->thread->load < 0)
+                    c->thread->load = 0;
                 conn_transfer3(c, false, true);
             }
         }
-    }
 
-    return;
+        return;
+    }
 }
 
 void event_handler(const int fd, const short which, void *arg)
@@ -7974,7 +7983,7 @@ static void clock_handler(const int fd, const short which, void *arg)
         {
             load_balncing(); //fixme uncomment to turn on load balncing
             power_stat.last_laod_balancing = current_time;
-            power_stat.transfering_epoch++;
+            // power_stat.transfering_epoch++;   showan : transfer this to power saving unit for faster transfer
         }
         return;
     }
@@ -8642,7 +8651,7 @@ int main(int argc, char **argv)
         "v"   /* verbose */
         "d"   /* daemon mode */
         "Q"   /* Thread Affinity */
-        "O:"   /* Affinity offset */
+        "O:"  /* Affinity offset */
         "l:"  /* interface to listen on */
         "u:"  /* user identity to run as */
         "P:"  /* save PID in file */
@@ -8690,7 +8699,7 @@ int main(int argc, char **argv)
         {"threads", required_argument, 0, 't'},
         {"enable-largepages", no_argument, 0, 'L'},
         {"max-reqs-per-event", required_argument, 0, 'R'},
-        {"affinity-offset", required_argument, 0, 'O'},   // =e add arg for affinity offset
+        {"affinity-offset", required_argument, 0, 'O'}, // =e add arg for affinity offset
         {"disable-cas", no_argument, 0, 'C'},
         {"listen-backlog", required_argument, 0, 'b'},
         {"protocol", required_argument, 0, 'B'},
@@ -8879,7 +8888,8 @@ int main(int argc, char **argv)
             break;
         case 'O':
             settings.thread_affinity_offset = atoi(optarg);
-            if (settings.thread_affinity_offset < 0) {
+            if (settings.thread_affinity_offset < 0)
+            {
                 fprintf(stderr, "Core offset must be greater than 0 and less than number of cpus\n");
                 return 1;
             }

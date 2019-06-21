@@ -473,6 +473,9 @@ bool load_balancing;
 bool victim_update; // showan: is it allowed to update victim
 rel_time_t last_laod_balancing;
 long transfering_epoch;
+long monitoring_epoch; // showan: after each transfering we take a vote from all workers to choose the woker with highest capacity
+int num_active_workers; // showan: shows the number of active workers= All workers - turned off workers
+int num_observed_worker_over_epoch; // showan: if we observe all workers capcity, we know who has the haighest capcity, who becomes attcker
 };
 
 
@@ -637,6 +640,7 @@ typedef struct {
     long number_of_guest;
     long number_of_guest_not_onload;
     long transfering_epoch;
+     long monitoring_epoch;
  
 
 #ifdef EXTSTORE

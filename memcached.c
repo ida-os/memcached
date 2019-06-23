@@ -5992,7 +5992,7 @@ static void drive_machine(conn *c) {
                
                if(((c->thread->load < power_stat.lowest_load )  || c->thread->index == power_stat.victim_worker)&& power_stat.victim_update == true )
                {
-                   
+                   printf("hi %d\n  ", 2);
              power_msg[0]= 'l'; 
              
             if(write(c->thread->send_power_msg, power_msg, 1) != 1)
@@ -6000,10 +6000,10 @@ static void drive_machine(conn *c) {
 
                }
 
-               if(c->thread->index != power_stat.victim_worker)
-               if((c->thread->capacity > power_stat.highets_capacity )||  (c->thread->index == power_stat.attacker) || (c->thread->monitoring_epoch != power_stat.monitoring_epoch))
+               //if(c->thread->index != power_stat.victim_worker)
+               if((c->thread->capacity > power_stat.highets_capacity )||  (c->thread->index == power_stat.attacker) || (power_stat.attacker== -1) || (c->thread->monitoring_epoch != power_stat.monitoring_epoch))
                {
-                   
+                   printf("by %d\n  ", 2);
              power_msg[0]= 'c'; 
              
             if(write(c->thread->send_power_msg, power_msg, 1) != 1)
@@ -6328,7 +6328,7 @@ the question is which connection- just randomly chooses one????*/
     //    denote_connection();
 //
     //}
-
+//
     //if(c->state == 1)
     //printf(" c -rebytes(%d)---c->state is %d \n", c->rbytes,c->state );
    // if(c->thread!=NULL && c->state== conn_new_cmd )
@@ -6349,6 +6349,7 @@ the question is which connection- just randomly chooses one????*/
                     power_stat.load_balancing= false;
                     power_stat.victim_update= true;
                     power_stat.num_active_workers --; // showan: reduce the number of active workers-
+                    power_stat.victim_worker = -1;
                 }
     
                 conn_transfer3(c, true, false);
@@ -6374,7 +6375,23 @@ the question is which connection- just randomly chooses one????*/
 
     }
 }
+/*
+if(c->thread!=NULL)
+if(power_stat.attacker == c->thread->index)
+{
+    c->thread->num_pos_span_per_hosting++;
+    if( c->thread->num_pos_span_per_hosting > power_stat.hosting_speed)
+    {
+        c->thread->num_pos_span_per_hosting=0;
+        power_stat.existing_capcity =0;
+        power_stat.num_observed_worker_over_epoch =0;
+        power_stat.monitoring_epoch ++; 
 
+
+    }       
+
+}
+*/
    
     
     return;
@@ -6844,7 +6861,7 @@ static void clock_handler(const int fd, const short which, void *arg) {
        // showan : we call load balncing here. I dont know if it is right thing to do
        if (current_time - power_stat.last_laod_balancing > 10000 ) // fixme 1000ms is pramater that should be fixed as soon as possible
           {
-          load_balncing(); //fixme uncomment to turn on load balncing
+          //load_balncing(); //fixme uncomment to turn on load balncing
           power_stat.last_laod_balancing = current_time;
          // power_stat.transfering_epoch++;   showan : transfer this to power saving unit for faster transfer
           }

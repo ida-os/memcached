@@ -472,6 +472,8 @@ long transfering_epoch;
 long monitoring_epoch; // showan: after each transfering we take a vote from all workers to choose the woker with highest capacity
 int num_active_workers; // showan: shows the number of active workers= All workers - turned off workers
 int num_observed_worker_over_epoch; // showan: if we observe all workers capcity, we know who has the haighest capcity, who becomes attcker
+double existing_capcity;
+long hosting_speed;
 };
 
 
@@ -638,6 +640,7 @@ typedef struct {
     long number_of_guest_not_onload;
     long transfering_epoch;
      long monitoring_epoch;
+     long num_pos_span_per_hosting; // this indicates the speed of hosting  by attcaker
  
 
 #ifdef EXTSTORE

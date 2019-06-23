@@ -145,7 +145,7 @@ static void register_thread_initialized(void) {
     pthread_mutex_unlock(&worker_hang_lock);
 }
 
-/* Must not be called with any deeper locks held */
+/* Must not be called with any deeper locks held *///
 void pause_threads(enum pause_thread_types type) {
     char buf[1];
     int i;
@@ -336,6 +336,7 @@ long transfering_epoch;
 long monitoring_epoch; // showan: after each transfering we take a vote from all workers to choose the woker with highest capacity
 int num_active_workers; // showan: shows the number of active workers= All workers - turned off workers
 int num_observed_worker_over_epoch; // showan: if we observe all workers capcity, we know who has the haighest capcity, who becomes attcker
+double existing_capcity; 
 }
 */
 //struct power_saving power_stat = {-1, -1, 99999999, 0,false, true, 0, 0, 1, settings.num_threads, 0 }; // move this to memcached_thread_init
@@ -378,6 +379,89 @@ static void power_saving_libevent(int fd, short which, void *arg) {
         return;
     }
 
+     printf("--outside-- Victim is %d --- attacker is %d \n", power_stat.victim_worker, power_stat.attacker);
+
+    if(power_stat.victim_worker== -1 ||  power_stat.attacker == -1)
+    {
+        power_stat.monitoring_epoch ++;
+        power_stat.num_observed_worker_over_epoch=0;
+        if (power_stat.victim_worker== -1)
+            power_stat.lowest_load = 9999999;
+        if(power_stat.attacker == -1)
+            power_stat.highets_capacity = 0;
+
+    }
+
+    
+
+    if((me->load < power_stat.lowest_load || me->index == power_stat.victim_worker)  &&   (power_stat.victim_update== true))
+    {   
+            
+            power_stat.lowest_load = me->load;
+            power_stat.victim_worker= me->index;
+            if( power_stat.attacker== me->index){// showan: if I am an attacker too
+             power_stat.attacker= -1;   // showan: I am no longer attacker
+             power_stat.highets_capacity  = 0;
+             }
+    }
+
+    if ((me->capacity > power_stat.highets_capacity  || me->index == power_stat.attacker) && me->index != power_stat.victim_worker)
+         {
+              power_stat.highets_capacity = me->capacity;
+              power_stat.attacker= me->index;
+             // printf("the attacker thread is %d and the capacity is %f \n", me->index, me->capacity);
+
+         }
+
+
+    if(me->monitoring_epoch != power_stat.monitoring_epoch)
+         {    
+             me->monitoring_epoch = power_stat.monitoring_epoch;
+             power_stat.num_observed_worker_over_epoch ++;
+             printf("I am thread   %d in observer with montoring epoch %ld and power stat monitoring epech is:  %ld\n", me->index,me->monitoring_epoch, power_stat.monitoring_epoch );
+
+            /*if(me->w_state != cold){
+               
+                 power_stat.existing_capcity += (me->capacity -5);   // fixme fixme very importan this is an threshold indicating if a thread capcity is leass than 5 dont calculate that 
+                //printf("existing_capcity %f ", power_stat.existing_capcity);
+                //printf("hi i am here %d", 2);
+              }*/
+           
+         }   
+
+       //printf("----------------> %d \n ",  power_stat.num_observed_worker_over_epoch );
+             printf("num obsereved %d ---- num_active_workers  %d \n", power_stat.num_observed_worker_over_epoch,  power_stat.num_active_workers );
+        if((power_stat.victim_worker!= -1)  && (power_stat.attacker!= -1) && (power_stat.victim_worker != power_stat.attacker  ))
+             if (power_stat.num_observed_worker_over_epoch  >= power_stat.num_active_workers ){ // when I see all workers - victim
+                   //printf("num obsereved %d ---- num_active_workers  %d \n", power_stat.num_observed_worker_over_epoch,  power_stat.num_active_workers );
+                   // printf("existing_capcity %f ---- vicyime load= %f -----  victime capcaity %f \n", power_stat.existing_capcity,  threads[power_stat.victim_worker].load, threads[power_stat.victim_worker].capacity);
+                power_stat.existing_capcity =0; 
+
+                for(int i=0; i< settings.num_threads; i++)
+                if(threads[i].w_state!= cold)
+                power_stat.existing_capcity+=threads[i].capacity -5; 
+                printf("existing_capcity %f ---- vicyime load= %f -----  victime capcaity %f--- Victim is %d --- attacker is %d \n", power_stat.existing_capcity,  threads[power_stat.victim_worker].load, threads[power_stat.victim_worker].capacity, power_stat.victim_worker, power_stat.attacker);
+                 if(threads[power_stat.victim_worker].load < (power_stat.existing_capcity - threads[power_stat.victim_worker].capacity ))
+                {  
+                    //if(threads[power_stat.victim_worker].load < threads[power_stat.attacker].capacity ) {
+                        power_stat.victim_update= false; // vitim is  no longer updated
+                        power_stat.load_balancing = true;
+                // if (power_stat.num_observed_worker_over_epoch >= 1 ){
+                        power_stat.transfering_epoch ++;
+                        power_stat.num_observed_worker_over_epoch =0;
+                        power_stat.existing_capcity =0;
+                   // }
+                 } 
+                 /*else
+                 {
+                     sampling= true;
+                 }
+                 */
+               
+
+
+         }     
+/*
     switch (buf[0]) {
     case 'l': // load
         // check if victim is cahnging
@@ -402,21 +486,67 @@ static void power_saving_libevent(int fd, short which, void *arg) {
              // printf("the attacker thread is %d and the capacity is %f \n", me->index, me->capacity);
 
          }
+        // printf("thread epoch %ld ---- power_state_epoch %ld \n", me->monitoring_epoch,  power_stat.monitoring_epoch );
          if(me->monitoring_epoch != power_stat.monitoring_epoch)
-         {   me->monitoring_epoch = power_stat.monitoring_epoch;
+         {    
+             me->monitoring_epoch = power_stat.monitoring_epoch;
              power_stat.num_observed_worker_over_epoch ++;
+             printf("I am thread   %d in observer with montoring epoch %ld and power stat monitoring epech is:  %ld\n", me->index,me->monitoring_epoch, power_stat.monitoring_epoch );
+
+            //if(me->w_state != cold){
+               
+              //   power_stat.existing_capcity += (me->capacity -5);   // fixme fixme very importan this is an threshold indicating if a thread capcity is leass than 5 dont calculate that 
+                //printf("existing_capcity %f ", power_stat.existing_capcity);
+                //printf("hi i am here %d", 2);
+             // }
+           
+         }   
+             
              //printf("----------------> %d \n ",  power_stat.num_observed_worker_over_epoch );
-             if (power_stat.num_observed_worker_over_epoch >= power_stat.num_active_workers -1 ){
+             printf("num obsereved %d ---- num_active_workers  %d \n", power_stat.num_observed_worker_over_epoch,  power_stat.num_active_workers );
+        if((power_stat.victim_worker!= -1)  && (power_stat.victim_worker != power_stat.attacker  ))
+             if (power_stat.num_observed_worker_over_epoch  >= power_stat.num_active_workers ){ // when I see all workers - victim
+                   //printf("num obsereved %d ---- num_active_workers  %d \n", power_stat.num_observed_worker_over_epoch,  power_stat.num_active_workers );
+                   // printf("existing_capcity %f ---- vicyime load= %f -----  victime capcaity %f \n", power_stat.existing_capcity,  threads[power_stat.victim_worker].load, threads[power_stat.victim_worker].capacity);
+                power_stat.existing_capcity =0; 
+
+                for(int i=0; i< settings.num_threads; i++)
+                if(threads[i].w_state!= cold)
+                power_stat.existing_capcity+=threads[i].capacity -5; 
+                printf("existing_capcity %f ---- vicyime load= %f -----  victime capcaity %f--- Victim is %d --- attacker is %d \n", power_stat.existing_capcity,  threads[power_stat.victim_worker].load, threads[power_stat.victim_worker].capacity, power_stat.victim_worker, power_stat.attacker);
+                 if(threads[power_stat.victim_worker].load < (power_stat.existing_capcity - threads[power_stat.victim_worker].capacity ))
+                {  
+                    //if(threads[power_stat.victim_worker].load < threads[power_stat.attacker].capacity ) {
+                        power_stat.victim_update= false; // vitim is  no longer updated
+                        power_stat.load_balancing = true;
                 // if (power_stat.num_observed_worker_over_epoch >= 1 ){
-                 power_stat.transfering_epoch ++;
-                 power_stat.num_observed_worker_over_epoch =0;
-             }
+                        power_stat.transfering_epoch ++;
+                        power_stat.num_observed_worker_over_epoch =0;
+                        power_stat.existing_capcity =0;
+                   // }
+                 } 
+                 //else
+                // {
+                //     sampling= true;
+                // }
+                 
+               
 
 
          }
+        //if(samling)
+         //{
+
+           //   power_stat.existing_capcity =0;
+            //  power_stat.num_observed_worker_over_epoch =0;
+             // power_stat.monitoring_epoch ++; 
+             // samling =false;
+         //}
+         
+         
          break;
     }
-    
+    */
         
 }
 
@@ -659,15 +789,20 @@ static void thread_libevent_process(int fd, short which, void *arg) {
                     c->thread->load += c->rate;
                     c->thread->capacity= c->thread->max_handled_load - c->thread->load;// fixem - should we do thi
 
-                    power_stat.monitoring_epoch ++; // showan: we can send a msg to dispatchet to do this. But  I thin race condtion wont happen now
+                    //c->thread->num_pos_span_per_hosting=0; // fixme
+                    //power_stat.num_observed_worker_over_epoch =0; // fixem 
+                    //power_stat.existing_capcity=0; 
+                    //power_stat.monitoring_epoch ++; // showan: we can send a msg to dispatchet to do this. But  I thin race condtion wont happen now
+                    
                     me->active_conn++; /* showan: increase the connecton number of thread by one*/
                     //if(c->is_guest == false)
                     //  c->home =me->index;  /* showan*/
                     //else 
                     if(c->is_guest  == true)
                     {
+                     power_stat.attacker= -1;
                      me->number_of_guest ++;
-                    // me->number_of_guest_not_onload ++;
+                  //  // me->number_of_guest_not_onload ++;
                     
                     }
              c->ev_flags = EV_READ | EV_PERSIST;
@@ -1162,6 +1297,7 @@ void memcached_thread_init(int nthreads, void *arg) {
         threads[i].number_of_guest_not_onload=0;
         threads[i].transfering_epoch = 0;
         threads[i].monitoring_epoch =0;
+       threads[i]. num_pos_span_per_hosting =0;
 
 
 
@@ -1177,6 +1313,8 @@ power_stat.transfering_epoch= 0;
 power_stat.monitoring_epoch= 1; 
 power_stat.num_active_workers= nthreads; 
 power_stat.num_observed_worker_over_epoch= 0; 
+power_stat.existing_capcity = 0;
+power_stat.hosting_speed = 100; 
 //power_stat = {-1, -1, 99999999, 0,false, true, 0, 0, 1, nthreads, 0 }; // showan
 
         

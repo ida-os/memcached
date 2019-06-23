@@ -3,7 +3,7 @@
 /** \file
  * The main memcached header holding commonly used data
  * structures and function prototypes.
- */
+ *///
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -533,6 +533,7 @@ typedef struct _stritem {
 enum crawler_run_type {
     CRAWLER_AUTOEXPIRE=0, CRAWLER_EXPIRED, CRAWLER_METADUMP
 };
+
 
 typedef struct {
     struct _stritem *next;

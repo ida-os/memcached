@@ -419,11 +419,11 @@ static void power_saving_libevent(int fd, short which, void *arg) {
     if (read(fd, buf, 1) != 1) {
         if (settings.verbose > 0)
             fprintf(stderr, "Can't read from libevent pipe\n");
-            printf("showan- did not get the message\n");
+        printf("showan- did not get the message\n");
         return;
     }
 
-     printf("--outside-- Victim is %d --- attacker is %d \n", power_stat.victim_worker, power_stat.attacker);
+     //printf("--outside-- Victim is %d --- attacker is %d \n", power_stat.victim_worker, power_stat.attacker);
 
     if(power_stat.victim_worker== -1 ||  power_stat.attacker == -1)
     {
@@ -462,7 +462,7 @@ static void power_saving_libevent(int fd, short which, void *arg) {
          {    
              me->monitoring_epoch = power_stat.monitoring_epoch;
              power_stat.num_observed_worker_over_epoch ++;
-             printf("I am thread   %d in observer with montoring epoch %ld and power stat monitoring epech is:  %ld\n", me->index,me->monitoring_epoch, power_stat.monitoring_epoch );
+             //printf("I am thread   %d in observer with montoring epoch %ld and power stat monitoring epech is:  %ld\n", me->index,me->monitoring_epoch, power_stat.monitoring_epoch );
 
             /*if(me->w_state != cold){
                
@@ -474,7 +474,7 @@ static void power_saving_libevent(int fd, short which, void *arg) {
          }   
 
        //printf("----------------> %d \n ",  power_stat.num_observed_worker_over_epoch );
-             printf("num obsereved %d ---- num_active_workers  %d \n", power_stat.num_observed_worker_over_epoch,  power_stat.num_active_workers );
+             //printf("num obsereved %d ---- num_active_workers  %d \n", power_stat.num_observed_worker_over_epoch,  power_stat.num_active_workers );
         if((power_stat.victim_worker!= -1)  && (power_stat.attacker!= -1) && (power_stat.victim_worker != power_stat.attacker  ))
              if (power_stat.num_observed_worker_over_epoch  >= power_stat.num_active_workers ){ // when I see all workers - victim
                    //printf("num obsereved %d ---- num_active_workers  %d \n", power_stat.num_observed_worker_over_epoch,  power_stat.num_active_workers );
@@ -484,7 +484,7 @@ static void power_saving_libevent(int fd, short which, void *arg) {
                 for(int i=0; i< settings.num_threads; i++)
                 if(threads[i].w_state!= cold)
                 power_stat.existing_capcity+=threads[i].capacity -5; 
-                printf("existing_capcity %f ---- vicyime load= %f -----  victime capcaity %f--- Victim is %d --- attacker is %d \n", power_stat.existing_capcity,  threads[power_stat.victim_worker].load, threads[power_stat.victim_worker].capacity, power_stat.victim_worker, power_stat.attacker);
+                //printf("existing_capcity %f ---- vicyime load= %f -----  victime capcaity %f--- Victim is %d --- attacker is %d \n", power_stat.existing_capcity,  threads[power_stat.victim_worker].load, threads[power_stat.victim_worker].capacity, power_stat.victim_worker, power_stat.attacker);
                  if(threads[power_stat.victim_worker].load < (power_stat.existing_capcity - threads[power_stat.victim_worker].capacity ))
                 {  
                     //if(threads[power_stat.victim_worker].load < threads[power_stat.attacker].capacity ) {
@@ -606,7 +606,7 @@ LIBEVENT_THREAD *thread ;
 if (go_to_attacker)
 {
     thread= threads +power_stat.attacker;
-    printf("go from home (%d)  capacity:%f- load:%f -activeCon: %ld  to attacker (%d) with capcaity: %f- load:%f- activeCon:%ld \n", c->thread->index, c->thread->capacity, c->thread->load, c->thread->active_conn,  power_stat.attacker, threads[ power_stat.attacker].capacity, threads[ power_stat.attacker].load, threads[ power_stat.attacker].active_conn );
+    //printf("go from home (%d)  capacity:%f- load:%f -activeCon: %ld  to attacker (%d) with capcaity: %f- load:%f- activeCon:%ld \n", c->thread->index, c->thread->capacity, c->thread->load, c->thread->active_conn,  power_stat.attacker, threads[ power_stat.attacker].capacity, threads[ power_stat.attacker].load, threads[ power_stat.attacker].active_conn );
 
 }   
 else  
@@ -614,7 +614,7 @@ else
 thread= threads+c->home;
 
 ////printf("go from hattacker  (%d) to home (%d) \n",c->thread->index,  c->home);
- printf("----->go from atttacker (%d)  capacity:%f- load:%f -activeCon: %ld  to home (%d) with capcaity: %f- load:%f- activeCon:%ld \n", c->thread->index, c->thread->capacity, c->thread->load, c->thread->active_conn,  c->home, threads[ c->home].capacity, threads[ c->home].load, threads[ c->home].active_conn );
+ //printf("----->go from atttacker (%d)  capacity:%f- load:%f -activeCon: %ld  to home (%d) with capcaity: %f- load:%f- activeCon:%ld \n", c->thread->index, c->thread->capacity, c->thread->load, c->thread->active_conn,  c->home, threads[ c->home].capacity, threads[ c->home].load, threads[ c->home].active_conn );
 }
 c->thread=  thread;
     CQ_ITEM *item = cqi_new();

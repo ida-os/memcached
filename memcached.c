@@ -5994,7 +5994,7 @@ static void drive_machine(conn *c) {
                
                if(((c->thread->load < power_stat.lowest_load )  || c->thread->index == power_stat.victim_worker)&& power_stat.victim_update == true )
                {
-                   printf("hi %d\n  ", 2);
+                   //printf("hi %d\n  ", 2);
              power_msg[0]= 'l'; 
              
             if(write(c->thread->send_power_msg, power_msg, 1) != 1)
@@ -6005,7 +6005,7 @@ static void drive_machine(conn *c) {
                //if(c->thread->index != power_stat.victim_worker)
                if((c->thread->capacity > power_stat.highets_capacity )||  (c->thread->index == power_stat.attacker) || (power_stat.attacker== -1) || (c->thread->monitoring_epoch != power_stat.monitoring_epoch))
                {
-                   printf("by %d\n  ", 2);
+                   //printf("by %d\n  ", 2);
              power_msg[0]= 'c'; 
              
             if(write(c->thread->send_power_msg, power_msg, 1) != 1)

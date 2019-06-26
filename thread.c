@@ -300,7 +300,7 @@ static void create_worker(void *(*func)(void *), void *arg) {
     if (settings.thread_affinity)
     {
         const int offset = settings.thread_affinity_offset;
-        static int current_cpu = -1;
+        static int current_cpu = 0;
 
         static int max_cpus = 8 * sizeof(cpu_set_t);
         cpu_set_t m;
